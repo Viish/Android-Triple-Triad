@@ -10,6 +10,21 @@
     <application android:label="@string/app_name"
         android:icon="@drawable/ic_launcher">
 
+        <activity android:name=".SplashScreen"
+                  android:label="@string/app_name"
+		    	  android:theme="@android:style/Theme.NoTitleBar"
+                  android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+		<activity android:name=".MainMenu" 
+		    	  android:theme="@android:style/Theme.NoTitleBar"
+		    	  android:screenOrientation="landscape">
+		</activity>
+		
     </application>
 
 </manifest>

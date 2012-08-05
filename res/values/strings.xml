@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Triple Triad</string>
+    
+    <!-- SplashScreen -->
+    <string name="splash_top">Android Triple Triad</string>
+    <string name="splash_bot">By Viish</string>
+    
 </resources>
