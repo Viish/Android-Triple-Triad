@@ -10,12 +10,27 @@ import java.util.Random;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Log;
+import android.preference.PreferenceManager;
 
 import com.viish.apps.tripletriad.cards.Card;
 import com.viish.apps.tripletriad.reseau.WifiConnection;
 import com.viish.apps.tripletriad.robots.Action;
 
+/*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 public class Engine
 {
 	public static final int PLAYER = 1;
@@ -41,32 +56,34 @@ public class Engine
 	
 	public Engine(Activity c, Card[] playerDeck, boolean pvp, boolean serveur, boolean identique, boolean plus, boolean mememur, boolean combo, boolean elementaire, String pvpServerIp)
 	{
-		this.context = c;
+		context = c;
 		this.playerDeck = playerDeck;
-		this.opponentDeck = new Card[playerDeck.length];
-		this.isServer = serveur;
+		opponentDeck = new Card[playerDeck.length];
+		isServer = serveur;
 		this.pvp = pvp;
-		this.isOpponentReady = false;
-		this.gameStarted = false;
+		isOpponentReady = false;
+		gameStarted = false;
 		
-		this.regleIdentique = identique;
-		this.reglePlus = plus;
-		this.regleMemeMur = mememur;
-		this.regleCombo = combo;
-		this.regleElementaire = elementaire;
+		regleIdentique = identique;
+		reglePlus = plus;
+		regleMemeMur = mememur;
+		regleCombo = combo;
+		regleElementaire = elementaire;
 
-		this.nbActionsPlayed = 0;
-		this.board = new Card[BOARD_SIZE];
+		nbActionsPlayed = 0;
+		board = new Card[BOARD_SIZE];
 		
-		if (regleElementaire)
-			this.boardElements = new String[BOARD_SIZE];
+		if (regleElementaire) {
+			boardElements = new String[BOARD_SIZE];
+		}
 		
 		if (!pvp || (pvp && isServer))
 		{
 			int firstToPlay = new Random().nextInt(2) + 1; // Renvoie une valeur au hasard entre 1 et 2
 			
-			if (regleElementaire)
+			if (regleElementaire) {
 				initializeElements();
+			}
 			
 			if (pvp && isServer)
 			{
@@ -75,37 +92,39 @@ public class Engine
 				pvpConnection.addNetworkListener(this);
 				new Thread(pvpConnection).start();
 			}
-			else
+			else {
 				gameStarted = true;
-
-			this.currentPlayer = firstToPlay;
-			this.startingPlayer = firstToPlay;
+			}
+			
+			currentPlayer = firstToPlay;
+			startingPlayer = firstToPlay;
 		}
 		else if (pvp && !isServer)
 		{
-			this.currentPlayer = OPPONENT;
-			this.startingPlayer = OPPONENT;
+			currentPlayer = OPPONENT;
+			startingPlayer = OPPONENT;
 			
 			pvpConnection = new WifiConnection(false, pvpServerIp, getPort(), getTtacc());
 			pvpConnection.addNetworkListener(this);
 			new Thread(pvpConnection).start();
 		}
-		else
+		else {
 			gameStarted = true;
+		}
 	}
 	
 	private int getPort()
 	{
-		SharedPreferences customSharedPreference = context.getSharedPreferences("TripleTriad", Activity.MODE_PRIVATE);
-		int port = customSharedPreference.getInt("Port", DEFAULT_PORT);
+		SharedPreferences customSharedPreference = PreferenceManager.getDefaultSharedPreferences(context);
+		int port = customSharedPreference.getInt(context.getResources().getString(R.string.pref_network_port), DEFAULT_PORT);
 		Log.d("Network Port", "actual value " + port);
 		return port;
 	}
 	
 	private int getTtacc()
 	{
-		SharedPreferences customSharedPreference = context.getSharedPreferences("TripleTriad", Activity.MODE_PRIVATE);
-		int ttacc = customSharedPreference.getInt("Ttacc", DEFAULT_TTACC);
+		SharedPreferences customSharedPreference = PreferenceManager.getDefaultSharedPreferences(context);
+		int ttacc = customSharedPreference.getInt(context.getResources().getString(R.string.pref_network_ttacc), DEFAULT_TTACC);
 		Log.d("Time to accept client connection", "actual value " + ttacc);
 		return ttacc;
 	}
@@ -252,19 +271,19 @@ public class Engine
 	
 	public void sendLostCard(Card card)
 	{
-		Log.d("DEBUG", "You lost : " + card.getFullName());
+		Log.d("You lost : " + card.getFullName());
 		pvpConnection.send("LOST " + card.getFullName());
 	}
 	
 	private void sendAgain()
 	{
-		Log.d("DEBUG", "Send me all again please");
+		Log.d("Send me all again please");
 		pvpConnection.send("AGAIN");
 	}
 	
 	private void sendReady()
 	{
-		Log.d("DEBUG", "I'm Ready !");
+		Log.d("I'm Ready !");
 		pvpConnection.send("READY");
 	}
 	
@@ -294,8 +313,9 @@ public class Engine
 	
 	public void shutdownSocket()
 	{
-		if (pvp)
+		if (pvp) {
 			pvpConnection.close();
+		}
 	}
 	
 	public void addEventFiredListener(EventFiredListener rtl)
@@ -593,8 +613,9 @@ public class Engine
 			}
 		}
 		
-		if (combo && swapped > 0)
+		if (combo && swapped > 0) {
 			fireComboRuleTriggered();
+		}
 	}
 	// Applique la regle Identique sur le plateau
 	private void applySameRule(int player, Card what, int cell, boolean combo)
@@ -688,13 +709,16 @@ public class Engine
 			{ 
 				if (!combo)
 				{
-					if (sameWall) 
+					if (sameWall)  {
 						fireSameWallRuleTriggered();
-					else 
+					}
+					else { 
 						fireSameRuleTriggered();
+					}
 				}
-				else
+				else {
 					fireComboRuleTriggered();
+				}
 			}
 			catch (Exception e)
 			{
@@ -775,10 +799,12 @@ public class Engine
 		{
 			if (swapped.size() >= 1)
 			{
-				if (combo) 
+				if (combo) {
 					fireComboRuleTriggered();
-				else
+				}
+				else {
 					firePlusRuleTriggered();
+				}
 			}
 		}
 		catch (Exception e)
@@ -804,9 +830,11 @@ public class Engine
 		if (boardElements[cell] == null || boardElements[cell] == "")
 			return;
 		
-		if (boardElements[cell].equals(card.getElement()))
+		if (boardElements[cell].equals(card.getElement())) {
 			card.bonusElementaire();
-		else
+		}
+		else {
 			card.malusElementaire();
+		}
 	}
 }

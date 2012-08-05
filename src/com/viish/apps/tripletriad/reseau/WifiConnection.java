@@ -11,6 +11,21 @@ import android.util.Log;
 
 import com.viish.apps.tripletriad.Engine;
 
+/*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 public class WifiConnection implements iReseau, Runnable
 {
 	public int timeToAcceptClientConnection;
@@ -44,17 +59,21 @@ public class WifiConnection implements iReseau, Runnable
 	{
 		try 
 		{
-			if (ss != null)
+			if (ss != null) {
 				ss.close();
+			}
 			
-			if (oos != null) 
+			if (oos != null) {
 				oos.close();
+			}
 			
-			if (receivingThread != null)
+			if (receivingThread != null) {
 				receivingThread.close();
+			}
 			
-			if (socket != null)
+			if (socket != null) {
 				socket.close();
+			}
 		} 
 		catch (Exception e) 
 		{
@@ -112,22 +131,25 @@ public class WifiConnection implements iReseau, Runnable
 	public void fireSomethingReceived(String msg)
 	{
 		Log.d("FiringSomethingReceived", msg);
-		for (Engine nl : listeners)
+		for (Engine nl : listeners) {
 			nl.onSomethingReceived(msg);
+		}
 	}
 	
 	public void fireOtherPlayerConnected()
 	{
 		Log.d("DEBUG", "FiringClientConnected");
-		for (Engine nl : listeners)
+		for (Engine nl : listeners) {
 			nl.onOtherPlayerConnected();
+		}
 	}
 	
 	public void fireErrorOccured()
 	{
 		Log.d("DEBUG", "fireErrorOccured");
-		for (Engine nl : listeners)
+		for (Engine nl : listeners) {
 			nl.onErrorOccured();
+		}
 	}
 
 	public void send(String query) 
