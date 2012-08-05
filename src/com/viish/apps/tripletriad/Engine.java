@@ -20,8 +20,8 @@ public class Engine
 {
 	public static final int PLAYER = 1;
 	public static final int OPPONENT = 2;
-	public static final int BLUE = 1;
-	public static final int RED = 2;
+	public static final int BLUE = PLAYER;
+	public static final int RED = OPPONENT;
 	
 	public static final int BOARD_SIZE = 9;
 	public static final int MAX_ACTIONS = BOARD_SIZE;
