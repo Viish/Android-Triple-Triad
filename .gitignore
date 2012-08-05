@@ -14,3 +14,8 @@ gen/
 
 # Local configuration file (sdk path, etc)
 local.properties
+
+# Images resources
+res/drawable*
+assets/*
+ic_launcher-web.png
