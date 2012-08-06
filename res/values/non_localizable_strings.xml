@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="pref_port_key">pref_port_key</string>
+    <string name="pref_ttacc_key">pref_ttacc_key</string>
+    <string name="pref_rule_reward_key">pref_rule_reward_key</string>
+    <string name="pref_rule_random_key">pref_rule_random_key</string>
+    <string name="pref_rule_open_key">pref_rule_open_key</string>
+    <string name="pref_rule_same_key">pref_rule_same_key</string>
+    <string name="pref_rule_plus_key">pref_rule_plus_key</string>
+    <string name="pref_rule_combo_key">pref_rule_combo_key</string>
+    <string name="pref_rule_same_wall_key">pref_rule_same_wall_key</string>
+    <string name="pref_rule_element_key">pref_rule_element_key</string>
+    
+</resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    
+    <string-array name="pref_ttacc_names">
+        <item>5 secs</item>
+        <item>10 secs</item>
+        <item>30 secs</item>
+        <item>1 min</item>
+        <item>2 mins</item>
+        <item>5 mins</item>
+        <item>10 mins</item>
+    </string-array>
+    
+   
+    <string-array name="pref_ttacc_values">
+        <item>5000</item>
+        <item>10000</item>
+        <item>30000</item>
+        <item>60000</item>
+        <item>120000</item>
+        <item>300000</item>
+        <item>600000</item>
+    </string-array>
+    
+    <string-array name="pref_reward_values">
+        <item>One</item>
+        <item>All</item>
+        <item>Direct</item>
+    </string-array>
+    
+    <string-array name="pref_reward_names">
+        <item>One</item>
+        <item>All</item>
+        <item>Direct</item>
+    </string-array>
+        
+</resources>

@@ -1,0 +1,60 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="@string/pref_rules">
+	
+	<PreferenceCategory
+	    android:title="@string/pref_rules">
+	    
+	    <ListPreference
+            android:title="@string/pref_rule_reward"
+            android:summary="@string/pref_rule_reward_summ"
+            android:key="@string/pref_rule_reward_key"
+            android:defaultValue="One"
+            android:entries="@array/pref_reward_names"
+            android:entryValues="@array/pref_reward_values" />
+	    
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_random"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_random_summ"
+	        android:key="@string/pref_rule_random_key" />
+        
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_open"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_open_summ"
+	        android:key="@string/pref_rule_open_key" />
+        
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_same"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_same_summ"
+	        android:key="@string/pref_rule_same_key" />
+        
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_plus"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_plus_summ"
+	        android:key="@string/pref_rule_plus_key" />
+        
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_combo"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_combo_summ"
+	        android:key="@string/pref_rule_combo_key" />
+        
+        <CheckBoxPreference
+	        android:title="@string/pref_rule_same_wall"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_same_wall_summ"
+	        android:key="@string/pref_rule_same_wall_key" />
+        
+         <CheckBoxPreference
+	        android:title="@string/pref_rule_element"
+	        android:defaultValue="false"
+	        android:summary="@string/pref_rule_element_summ"
+	        android:key="@string/pref_rule_element_key" />
+         
+	</PreferenceCategory>
+	
+</PreferenceScreen>	

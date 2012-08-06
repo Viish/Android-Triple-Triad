@@ -116,7 +116,7 @@ public class Engine
 	private int getPort()
 	{
 		SharedPreferences customSharedPreference = PreferenceManager.getDefaultSharedPreferences(context);
-		int port = customSharedPreference.getInt(context.getResources().getString(R.string.pref_network_port), DEFAULT_PORT);
+		int port = customSharedPreference.getInt(context.getResources().getString(R.string.pref_port_key), DEFAULT_PORT);
 		Log.d("Network Port", "actual value " + port);
 		return port;
 	}
@@ -124,7 +124,7 @@ public class Engine
 	private int getTtacc()
 	{
 		SharedPreferences customSharedPreference = PreferenceManager.getDefaultSharedPreferences(context);
-		int ttacc = customSharedPreference.getInt(context.getResources().getString(R.string.pref_network_ttacc), DEFAULT_TTACC);
+		int ttacc = customSharedPreference.getInt(context.getResources().getString(R.string.pref_ttacc_key), DEFAULT_TTACC);
 		Log.d("Time to accept client connection", "actual value " + ttacc);
 		return ttacc;
 	}

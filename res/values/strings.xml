@@ -5,4 +5,34 @@
     <string name="splash_top">Android Triple Triad</string>
     <string name="splash_bot">By Viish</string>
     
+    <!-- Menu -->
+    <string name="menu_settings">Preferences</string>
+    
+    <!-- Preferences -->
+    <string name="pref_network">Network</string>
+    <string name="pref_network_summ">Be careful ! Only change these values if you no what you are doing !</string>
+    <string name="pref_port">Multiplayer port</string>
+    <string name="pref_port_summ">Port to use for multiplayer. Default is 7666.</string>
+    <string name="pref_ttacc">Time to wait for a connection</string>
+    <string name="pref_ttacc_summary">Time to wait for an incoming connection while hosting a pvp game.</string>
+    
+    <string name="pref_rules">Rules</string>
+    <string name="pref_rules_summ">Rules you want to use for your matches. See tutorial for more information.</string>
+    <string name="pref_rule_reward">Reward</string>
+    <string name="pref_rule_reward_summ">Defines how much/which card(s) you\'ll win/loose after a match.</string>
+    <string name="pref_rule_random">Random</string>
+    <string name="pref_rule_random_summ">Check this to not choose cards you\'ll use before each match.</string>
+    <string name="pref_rule_same">Same</string>
+    <string name="pref_rule_same_summ">Enable/disable \'Same\' rule.</string>
+    <string name="pref_rule_plus">Plus</string>
+    <string name="pref_rule_plus_summ">Enable/disable \'Plus\' rule.</string>
+    <string name="pref_rule_combo">Combo</string>
+    <string name="pref_rule_combo_summ">Enable/disable \'Combo\' rule.</string>
+    <string name="pref_rule_same_wall">Same Wall</string>
+    <string name="pref_rule_same_wall_summ">Enable/disable \'Same Wall\' rule.</string>
+    <string name="pref_rule_element">Elementary</string>
+    <string name="pref_rule_element_summ">Enable/disable \'Elementary\' rule.</string>
+    <string name="pref_rule_open">Open</string>
+    <string name="pref_rule_open_summ">Check this to see your opponents cards and show yours to him.</string>
+    
 </resources>

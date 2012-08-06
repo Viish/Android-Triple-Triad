@@ -1,0 +1,24 @@
+<PreferenceScreen  
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    
+	<PreferenceCategory
+	    android:title="@string/pref_network"
+	    android:summary="@string/pref_network_summ">
+	    
+	    <EditTextPreference
+			android:title="@string/pref_port"
+			android:summary="@string/pref_port_summ"
+			android:defaultValue="7666"
+			android:key="@string/pref_port_key" />
+	    
+		<ListPreference
+	           android:title="@string/pref_ttacc"
+	           android:summary="@string/pref_ttacc_summary"
+	           android:key="@string/pref_ttacc_key"
+	           android:defaultValue="30000"
+	           android:entries="@array/pref_ttacc_names"
+	           android:entryValues="@array/pref_ttacc_values" />
+		
+	</PreferenceCategory>
+	
+</PreferenceScreen>

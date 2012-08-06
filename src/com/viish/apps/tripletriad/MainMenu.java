@@ -1,6 +1,16 @@
 package com.viish.apps.tripletriad;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.TextView;
+
+import com.viish.apps.tripletriad.settings.SettingsActivity;
 
 /*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
 
@@ -17,7 +27,37 @@ import android.app.Activity;
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-public class MainMenu extends Activity
+public class MainMenu extends Activity implements OnClickListener
 {
+	private Typeface typeface;
+	
+	public void onCreate(Bundle savedInstanceState) 
+    {
+        super.onCreate(savedInstanceState);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.menu);
+        
+        PreferenceManager.setDefaultValues(this, R.xml.network_preferences, false);
+        PreferenceManager.setDefaultValues(this, R.xml.rules_preferences, false);
+        
+        Typeface tempTF = Typeface.createFromAsset(getAssets(), "ff8font.ttf");
+        typeface = Typeface.create(tempTF, Typeface.BOLD);
+        
+        initMenuItem((TextView) findViewById(R.id.settings));
+    }
+	
+	private void initMenuItem(TextView menu) {
+		menu.setOnClickListener(this);
+		menu.setTypeface(typeface);
+	}
 
+	@Override
+	public void onClick(View v) {
+		int id = v.getId();
+		switch (id) {
+		case R.id.settings:
+			startActivity(new Intent(this, SettingsActivity.class));
+			break;
+		}
+	}
 }

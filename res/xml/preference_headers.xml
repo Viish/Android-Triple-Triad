@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header 
+        android:fragment="com.viish.apps.tripletriad.settings.SettingsActivity$RulesSettingsFragment"
+        android:title="@string/pref_rules"
+        android:summary="@string/pref_rules_summ" />
+    <header 
+        android:fragment="com.viish.apps.tripletriad.settings.SettingsActivity$NetworkSettingsFragment"
+        android:title="@string/pref_network"
+        android:summary="@string/pref_network_summ" >
+    </header>
+</preference-headers>
