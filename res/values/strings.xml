@@ -7,6 +7,7 @@
     
     <!-- Menu -->
     <string name="menu_settings">Preferences</string>
+    <string name="menu_demo">Demo</string>
     
     <!-- Preferences -->
     <string name="pref_network">Network</string>
@@ -34,5 +35,10 @@
     <string name="pref_rule_element_summ">Enable/disable \'Elementary\' rule.</string>
     <string name="pref_rule_open">Open</string>
     <string name="pref_rule_open_summ">Check this to see your opponents cards and show yours to him.</string>
+    
+    <!-- Game -->
+    <string name="waiting_for_client">Waiting for an opponent, please wait.</string>
+    <string name="ipaddress">Your IP address is</string>
+    <string name="port">Server is listening on port</string>
     
 </resources>

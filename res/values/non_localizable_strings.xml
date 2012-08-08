@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
+    <string name="pref_first_launch">pref_first_launch</string>
     <string name="pref_port_key">pref_port_key</string>
     <string name="pref_ttacc_key">pref_ttacc_key</string>
     <string name="pref_rule_reward_key">pref_rule_reward_key</string>

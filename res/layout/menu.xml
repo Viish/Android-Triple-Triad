@@ -26,10 +26,21 @@
             android:id="@+id/settings"
 		    android:layout_width="match_parent"
 		    android:layout_height="match_parent"
+		    android:layout_weight="1"
 		    android:gravity="center"
             android:textSize="50dp"
             android:textColor="@android:color/black"
 		    android:text="@string/menu_settings"/>
+        
+        <TextView 
+            android:id="@+id/demo"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+		    android:layout_weight="1"
+		    android:gravity="center"
+            android:textSize="50dp"
+            android:textColor="@android:color/black"
+		    android:text="@string/menu_demo"/>
         
     </LinearLayout>
     

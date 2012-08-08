@@ -2,6 +2,7 @@ package com.viish.apps.tripletriad;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -44,6 +45,20 @@ public class MainMenu extends Activity implements OnClickListener
         typeface = Typeface.create(tempTF, Typeface.BOLD);
         
         initMenuItem((TextView) findViewById(R.id.settings));
+        initMenuItem((TextView) findViewById(R.id.demo));
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean(getString(R.string.pref_first_launch), true))
+		{
+	        DatabaseStream dbs = new DatabaseStream(this);        
+			dbs.initCards();
+			dbs.getGils();
+	        dbs.close();
+	        
+	        SharedPreferences.Editor editor = prefs.edit();
+	        editor.putBoolean(getString(R.string.pref_first_launch), false);
+	        editor.commit();
+		}
     }
 	
 	private void initMenuItem(TextView menu) {
@@ -57,6 +72,12 @@ public class MainMenu extends Activity implements OnClickListener
 		switch (id) {
 		case R.id.settings:
 			startActivity(new Intent(this, SettingsActivity.class));
+			break;
+		case R.id.demo:
+			Intent i = new Intent(this, Game.class);
+			i.putExtra("BotVsBot", true);
+			i.putExtra("PvP", false);
+			startActivity(i);
 			break;
 		}
 	}

@@ -19,3 +19,21 @@ License
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+About
+====================
+Currently this is an old version of the available version of Android Triple Triad 2 (on the Android Market), because I lost the latest revision.
+First I'll use (and improve) some old code, then I'll rewrite from scratch what has to be.
+If you see some ugly code, I apologize but it's "normal". I wrote this game when I started to learn how to develop (both Android and Java). I'll improve it step by step (I already started).
+
+What's working
+====================
+* Settings
+* Demo mode (IA against IA)
+* Runs on both smartphones and tablets
+
+ToDo
+====================
+* Rewrite game view & engine
+* Make botHard works
+* Optimize for Android 3+

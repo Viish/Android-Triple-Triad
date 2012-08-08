@@ -38,6 +38,10 @@ public class Engine
 	public static final int BLUE = PLAYER;
 	public static final int RED = OPPONENT;
 	
+	public static final int GILS_WIN = 100;
+	public static final int GILS_LOOSE = 10;
+	public static final int GILS_DRAW = 50;
+	
 	public static final int BOARD_SIZE = 9;
 	public static final int MAX_ACTIONS = BOARD_SIZE;
 	public static final int DEFAULT_PORT = 7666;

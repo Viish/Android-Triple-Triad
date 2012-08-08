@@ -156,7 +156,8 @@ public class DatabaseStream
 	{
 		Card card = null;
 		Cursor result = stream.query("Cards", null, "Level LIKE " + level + " AND Episode NOT LIKE 0", null, null, null, "Name ASC");
-		if (result != null && result.move(1)) {
+		int randomInt = new Random().nextInt(result.getCount());
+		if (result != null && result.move(randomInt)) {
 			card = getCard(result);
 		}
 		result.close();
