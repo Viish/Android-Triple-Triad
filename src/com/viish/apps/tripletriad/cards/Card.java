@@ -68,6 +68,12 @@ public class Card
 			clone.unlock();
 		}
 		
+		if (cardView != null) {
+			CompleteCardView clonedView = new CompleteCardView(cardView.getContext(), clone);
+			clonedView.setColor(cardView.getColor());
+			clone.setCardView(clonedView);
+		}
+		
 		return clone;
 	}
 	

@@ -28,6 +28,7 @@ import com.viish.apps.tripletriad.cards.Card;
 import com.viish.apps.tripletriad.cards.CompleteCardView;
 import com.viish.apps.tripletriad.robots.Action;
 import com.viish.apps.tripletriad.robots.BotEasy;
+import com.viish.apps.tripletriad.robots.BotHard;
 import com.viish.apps.tripletriad.robots.iBot;
 import com.viish.apps.tripletriad.views.ElementView;
 import com.viish.apps.tripletriad.views.HandView;
@@ -54,7 +55,7 @@ public class Game extends Activity implements EventFiredListener
 	public static final int PLAYER = Engine.PLAYER;
 	public static final int OPPONENT = Engine.OPPONENT;
 	
-	public static final int SLEEP_TIME_BEFORE = 3000;
+	public static final int SLEEP_TIME_BEFORE = 1000;
 	public static final int SLEEP_TIME_POPUP = 1000;
 	public static final int SLEEP_TIME_ENDGAME = 3000;
 
@@ -155,7 +156,7 @@ public class Game extends Activity implements EventFiredListener
 			if (isBotVsBot) {
 				mFakePlayer = new BotEasy(PLAYER, mPlayerDeck, mEngine.getBoard(), mEngine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
 			}
-//			robot = new BotHard(engine, PlayerDeck, OpponentDeck, engine.getBoard(), engine.getElements(), regleIdentique, reglePlus, regleMemeMur, regleCombo, regleElementaire);
+			mRobot = new BotHard(OPPONENT, PLAYER, mOpponentDeck, mPlayerDeck, mEngine.getBoard(), mEngine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
 			
 			startGame();
 		}
@@ -276,13 +277,11 @@ public class Game extends Activity implements EventFiredListener
 		for (int card = 0; card < myDeck.length; card++)
 		{
 			robotDeck[card] = dbs.getRandomCard(myDeck[card].getLevel());
-			if (DEBUG) Log.d("Random Robot Deck", robotDeck[card].toString() + " added !");
 			if (card > 0) {
 				for (int j = 0; j < card; j++)
 				{
 					if (robotDeck[j].getFullName().equals(robotDeck[card].getFullName()))
 					{
-						if (DEBUG) Log.d("Random Robot Deck (" + card + ")", robotDeck[card].toString() + " deleted (copy of " + j + ") !");
 						card--;
 						break;
 					}
