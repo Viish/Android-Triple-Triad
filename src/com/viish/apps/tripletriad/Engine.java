@@ -177,8 +177,9 @@ public class Engine
 		{
 			sendMyDeck();
 			
-			if (regleElementaire)
+			if (regleElementaire) {
 				sendElementBoard();
+			}
 		}
 		else if (m.startsWith("ACTION"))
 		{
@@ -206,8 +207,9 @@ public class Engine
 			if (isOpponentDeckFull() && startingPlayer != 0 && !gameStarted)
 			{
 				sendReady();
-				if (isOpponentReady)
+				if (isOpponentReady) {
 					firePvPGameReadyToStart(opponentDeck);
+				}
 			}
 		}
 		else if (m.startsWith("ELEMENT"))
@@ -219,8 +221,9 @@ public class Engine
 			if (isOpponentDeckFull() && startingPlayer != 0 && !gameStarted)
 			{
 				sendReady();
-				if (isOpponentReady)
+				if (isOpponentReady) {
 					firePvPGameReadyToStart(opponentDeck);
+				}
 			}
 		}
 	}
@@ -412,8 +415,9 @@ public class Engine
 				player++;
 		}
 		
-		if (startingPlayer == OPPONENT) 
+		if (startingPlayer == OPPONENT) { 
 			player++;
+		}
 		return player;
 	}
 
@@ -422,12 +426,14 @@ public class Engine
 		int opponent = 0;
 		for (Card c : board)
 		{
-			if (c != null && c.getCardView().getColor() == OPPONENT)
+			if (c != null && c.getCardView().getColor() == OPPONENT) {
 				opponent++;
+			}
 		}
 		
-		if (startingPlayer == PLAYER) 
+		if (startingPlayer == PLAYER) {
 			opponent++;
+		}
 		return opponent;
 	}
 	
@@ -480,6 +486,10 @@ public class Engine
 	
 	public boolean isCellEmpty(int cell)
 	{
+		if (cell >= BOARD_SIZE) {
+			return false;
+		}
+		
 		return board[cell] == null;
 	}
 	
@@ -496,26 +506,29 @@ public class Engine
 		}
 		
 		card.lock();
-		this.board[cell] = card;
+		board[cell] = card;
     	this.nbActionsPlayed += 1;
     	
-    	if (currentPlayer == PLAYER)
+    	if (currentPlayer == PLAYER) {
     		currentPlayer = OPPONENT;
-		else
+    	} else {
 			currentPlayer = PLAYER;
+    	}
     	
-		// Applique la Regle Elementaire
-		if (regleElementaire) applyElementaireRule(card, cell);
+		if (regleElementaire) {
+			applyElementaireRule(card, cell);
+		}
 		
     	if (nbActionsPlayed > 1)
     	{
-	    	// Applique la Regle Identique
-			if (regleIdentique) applySameRule(player, card, cell, false);
+			if (regleIdentique) {
+				applySameRule(player, card, cell, false);
+			}
 			
-			// Applique la Regle Plus
-			if (reglePlus) applyPlusRule(player, card, cell, false);
+			if (reglePlus) {
+				applyPlusRule(player, card, cell, false);
+			}
 			
-			// Applique la Regle de base
 			applyBasicRule(player, card, cell, false);
     	}
 	}
@@ -523,95 +536,95 @@ public class Engine
 	private void applyBasicRule(int player, Card card, int cell, boolean combo)
 	{
 		int swapped = 0;
-		if (cell % 3 == 0) // Carte colonne gauche
+		if (cell % 3 == 0) 
 		{
-			Card c = this.board[cell + 1];
-			if (c != null) // Si il y a une carte a sa droite
+			Card c = board[cell + 1];
+			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue())
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor();
 					swapped++;
 				}
 			}
 		}
-		else if (cell % 3 == 1) // Colonne du milieu
+		else if (cell % 3 == 1)
 		{
-			Card c = this.board[cell + 1];
-			if (c != null) // Si il y a une carte a sa droite
+			Card c = board[cell + 1];
+			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue()) 
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor();
 					swapped++;
 				}
 			}
 			
-			c = this.board[cell - 1];
-			if (c != null) // Si il y a une carte a sa gauche
+			c = board[cell - 1];
+			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue())
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor(); 
 					swapped++;
 				}
 			}
 		}
-		else // Colonne de droite
+		else
 		{
-			Card c = this.board[cell - 1];
-			if (c != null) // Si il y a une carte a sa gauche
+			Card c = board[cell - 1];
+			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue()) 
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor(); 
 					swapped++;
 				}
 			}
 		}
 		
-		if (cell / 3 == 0) // Ligne du haut
+		if (cell / 3 == 0)
 		{
-			Card c = this.board[cell + 3];
-			if (c != null) // Si il y a une carte en dessous
+			Card c = board[cell + 3];
+			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) 
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor();
 					swapped++;
 				}
 			}
 		}
-		else if (cell / 3 == 1) // Ligne du milieu
+		else if (cell / 3 == 1)
 		{
 			Card c = board[cell + 3];
-			if (c != null) // Si il y a une carte en dessous
+			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) 
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor();
 					swapped++;
 				}
 			}
 			
 			c = board[cell - 3];
-			if (c != null) // Si il y a une carte en dessus
+			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue())
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor(); 
 					swapped++;
 				}
 			}
 		}
-		else // Ligne du bas
+		else
 		{
-			Card c = this.board[cell - 3];
-			if (c != null) // Si il y a une carte en dessus
+			Card c = board[cell - 3];
+			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
+				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue())
 				{
-					c.getCardView().swapColor(); // On retourne l'autre
+					c.getCardView().swapColor();
 					swapped++;
 				}
 			}
@@ -621,22 +634,21 @@ public class Engine
 			fireComboRuleTriggered();
 		}
 	}
-	// Applique la regle Identique sur le plateau
+	
 	private void applySameRule(int player, Card what, int cell, boolean combo)
 	{
-		ArrayList<Integer> cards = new ArrayList<Integer>(); // Cartes subissant/permettant Identique
+		ArrayList<Integer> cards = new ArrayList<Integer>();
 		int carteAdverse = 0;
 		boolean sameWall = false;
 		
-		if (cell - 3 >= 0 && this.board[cell - 3] != null) // carte du dessus si existante
+		if (cell - 3 >= 0 && board[cell - 3] != null)
 		{
-			if (this.board[cell - 3].getBottomValue() == what.getTopValue())
+			if (board[cell - 3].getBottomValue() == what.getTopValue())
 			{
 				cards.add(cell - 3);
-				if (this.board[cell - 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 3].getCardView().getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell - 3 < 0 && regleMemeMur) // Regle MemeMur
 		{
 			if (10 == what.getTopValue())
 			{
@@ -644,15 +656,15 @@ public class Engine
 				sameWall = true;
 			}
 		}
-		if (cell + 3 < this.board.length && this.board[cell + 3] != null) // carte du dessous si existante
+		if (cell + 3 < this.board.length && board[cell + 3] != null)
 		{
-			if (this.board[cell + 3].getTopValue() == what.getBottomValue())
+			if (board[cell + 3].getTopValue() == what.getBottomValue())
 			{
 				cards.add(cell + 3);
-				if (this.board[cell + 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 3].getCardView().getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell + 3 >= this.board.length && regleMemeMur) // Regle MemeMur
+		else if (cell + 3 >= this.board.length && regleMemeMur)
 		{
 			if (10 == what.getBottomValue())
 			{
@@ -660,15 +672,15 @@ public class Engine
 				sameWall = true;
 			}
 		}
-		if (cell % 3 <= 1 && this.board[cell + 1] != null) // colonne gauche ou milieu
+		if (cell % 3 <= 1 && board[cell + 1] != null)
 		{
-			if (this.board[cell + 1].getLeftValue() == what.getRightValue())
+			if (board[cell + 1].getLeftValue() == what.getRightValue())
 			{
 				cards.add(cell + 1);
-				if (this.board[cell + 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 1].getCardView().getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell % 3 == 2 && regleMemeMur) // Regle MemeMur
+		else if (cell % 3 == 2 && regleMemeMur)
 		{
 			if (10 == what.getRightValue())
 			{
@@ -676,15 +688,15 @@ public class Engine
 				sameWall = true;
 			}
 		}
-		if (cell % 3 >= 1 && this.board[cell - 1] != null) // colonne droite ou milieu
+		if (cell % 3 >= 1 && board[cell - 1] != null)
 		{
-			if (this.board[cell - 1].getRightValue() == what.getLeftValue())
+			if (board[cell - 1].getRightValue() == what.getLeftValue())
 			{
 				cards.add(cell - 1);
-				if (this.board[cell - 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 1].getCardView().getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell % 3 == 0 && regleMemeMur) // Regle MemeMur
+		else if (cell % 3 == 0 && regleMemeMur)
 		{
 			if (10 == what.getLeftValue())
 			{
@@ -695,12 +707,12 @@ public class Engine
 		
 		if (cards.size() >= 2 && carteAdverse >= 1)
 		{
-			ArrayList<Integer> swapped = new ArrayList<Integer>(); // Cartes swapped
-			for (int c : cards) // Pour chaque carte, on les retourne si besoin est
+			ArrayList<Integer> swapped = new ArrayList<Integer>();
+			for (int c : cards)
 			{
 				if (c != -1)
 				{
-					Card card = this.board[c];
+					Card card = board[c];
 					if (card.getCardView().getColor() != player)
 					{
 						card.getCardView().swapColor();
@@ -729,20 +741,21 @@ public class Engine
 				e.printStackTrace();
 			}
 			
-			if (regleCombo) // Si regle Combo
+			if (regleCombo)
 			{
-				for (int c : swapped) // Pour chaque carte retourn�e, on fait suivre la combo
+				for (int c : swapped) 
 				{
-					Card card = this.board[c];
+					Card card = board[c];
 					applySameRule(player, card, c, true);
-					if (reglePlus) applyPlusRule(player, card, c, true);
+					if (reglePlus) {
+						applyPlusRule(player, card, c, true);
+					}
 					applyBasicRule(player, card, c, true);
 				}
 			}
 		}
 	}
 	
-	// Applique la regle Plus sur le plateau
 	private void applyPlusRule(int player, Card what, int cell, boolean combo)
 	{
 		Card[] cards = new Card[4];
@@ -753,10 +766,18 @@ public class Engine
 		numeros[1] = cell - 1;
 		numeros[2] = cell + 3;
 		numeros[3] = cell + 1;
-		if (cell - 3 >= 0) cards[0] = this.board[cell - 3];
-		if (cell + 3 < this.board.length) cards[2] = this.board[cell + 3];
-		if (cell % 3 <= 1) cards[3] = this.board[cell + 1];
-		if (cell % 3 >= 1) cards[1] = this.board[cell - 1];
+		if (cell - 3 >= 0) {
+			cards[0] = board[cell - 3];
+		}
+		if (cell + 3 < board.length) {
+			cards[2] = board[cell + 3];
+		}
+		if (cell % 3 <= 1) {
+			cards[3] = board[cell + 1];
+		}
+		if (cell % 3 >= 1) {
+			cards[1] = board[cell - 1];
+		}
 		
 		for (int i = 0; i < 3; i ++)
 		{ 
@@ -764,9 +785,15 @@ public class Engine
 			if (cards[i] != null)
 			{
 				int somme = 0;
-				if (i == 0) somme = what.getTopValue() + cards[i].getBottomValue();
-				else if (i == 1) somme = what.getLeftValue() + cards[i].getRightValue();
-				else if (i == 2) somme = what.getBottomValue() + cards[i].getTopValue();
+				if (i == 0) {
+					somme = what.getTopValue() + cards[i].getBottomValue();
+				}
+				else if (i == 1) {
+					somme = what.getLeftValue() + cards[i].getRightValue();
+				}
+				else if (i == 2) {
+					somme = what.getBottomValue() + cards[i].getTopValue();
+				}
 				
 				if (player != cards[i].getCardView().getColor()) condition = true;
 				
@@ -775,13 +802,19 @@ public class Engine
 					if (cards[j] != null)
 					{
 						int somme2 = 0;
-						if (j == 3) somme2 = what.getRightValue() + cards[j].getLeftValue();
-						else if (j == 1) somme2 = what.getLeftValue() + cards[j].getRightValue();
-						else if (j == 2) somme2 = what.getBottomValue() + cards[j].getTopValue();
+						if (j == 3) {
+							somme2 = what.getRightValue() + cards[j].getLeftValue();
+						}
+						else if (j == 1) {
+							somme2 = what.getLeftValue() + cards[j].getRightValue();
+						}
+						else if (j == 2) {
+							somme2 = what.getBottomValue() + cards[j].getTopValue();
+						}
 						
 						if (player != cards[j].getCardView().getColor()) condition = true;
 						
-						if (somme == somme2 && condition) // Toutes les conditions remplies
+						if (somme == somme2 && condition)
 						{
 							if (cards[i].getCardView().getColor() != player)
 							{
@@ -816,13 +849,15 @@ public class Engine
 			return;
 		}
 		
-		if (regleCombo)  // Si regle Combo
+		if (regleCombo)
 		{
-			for (int i : swapped) // Pour chaque carte retourn�e, on fait suivre la combo
+			for (int i : swapped)
 			{
 				int c = numeros[i];
 				Card card = cards[i];
-				if (regleIdentique) applySameRule(player, card, c, true);
+				if (regleIdentique) {
+					applySameRule(player, card, c, true);
+				}
 				applyPlusRule(player, card, c, true);
 				applyBasicRule(player, card, c, true);
 			}
@@ -831,8 +866,9 @@ public class Engine
 	
 	private void applyElementaireRule(Card card, int cell)
 	{
-		if (boardElements[cell] == null || boardElements[cell] == "")
+		if (boardElements[cell] == null || boardElements[cell] == "") {
 			return;
+		}
 		
 		if (boardElements[cell].equals(card.getElement())) {
 			card.bonusElementaire();

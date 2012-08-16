@@ -80,7 +80,6 @@ public class BotHard implements iBot
 							
 							simulate(ME, card, slot, copyBoard);
 							gain = min(copyBoard, profondeurMax);
-							Log.e("Gain = " + gain);
 							
 							if (gain > gainMax) {
 								gainMax = gain;

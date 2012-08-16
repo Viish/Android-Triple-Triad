@@ -41,4 +41,9 @@
     <string name="ipaddress">Your IP address is</string>
     <string name="port">Server is listening on port</string>
     
+    <string name="event_same_wall">Same Wall !</string>
+    <string name="event_same">Same !</string>
+    <string name="event_plus">Plus !</string>
+    <string name="event_combo">Combo !</string>
+    
 </resources>

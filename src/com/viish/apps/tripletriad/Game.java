@@ -5,20 +5,17 @@ import java.util.HashMap;
 import java.util.Random;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -27,12 +24,9 @@ import android.widget.Toast;
 import com.viish.apps.tripletriad.cards.Card;
 import com.viish.apps.tripletriad.cards.CompleteCardView;
 import com.viish.apps.tripletriad.robots.Action;
-import com.viish.apps.tripletriad.robots.BotEasy;
 import com.viish.apps.tripletriad.robots.BotHard;
 import com.viish.apps.tripletriad.robots.iBot;
 import com.viish.apps.tripletriad.views.ElementView;
-import com.viish.apps.tripletriad.views.HandView;
-import com.viish.apps.tripletriad.views.TossView;
 
 /*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
 
@@ -51,36 +45,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 public class Game extends Activity implements EventFiredListener
 {
-	public static final boolean DEBUG = true;
 	public static final int PLAYER = Engine.PLAYER;
 	public static final int OPPONENT = Engine.OPPONENT;
 	
-	public static final int SLEEP_TIME_BEFORE = 1000;
-	public static final int SLEEP_TIME_POPUP = 1000;
-	public static final int SLEEP_TIME_ENDGAME = 3000;
-
-	private RewardRule winningRule = RewardRule.One;
-	private boolean isRegleRandom = true;
-	private boolean isRegleOpen = false;
-	private boolean isRegleIdentique = true;
-	private boolean isRegleCombo = false;
-	private boolean isReglePlus = true;
-	private boolean isRegleMemeMur = true;
-	private boolean isRegleElementaire = false;
-	private boolean isBotVsBot = false;
+	public static final int TIME_BEFORE_OPPONENT_MOVE = 1000;
+	public static final int TIME_BEFORE_HIDING_EVENT = 1000;
+	public static final int TIME_BEFORE_HIDING_RESULT = 3000;
+	public static final int TIME_BEFORE_GOING_BACK = 2000;
+	public static final int TIME_BEFORE_GOING_BACK_IF_BOT_WON = 4000;
+	
+	private Handler handler = new Handler();
+	private Engine engine;
+	
+	private Card[] playerDeck, opponentDeck;
+	private Card selectedCard;
+	private String[] wonCards, loseCards;
+	
+	private FrameLayout mainLayout;
+	private int layoutHeight, layoutWidth, fieldHeight, fieldWidth;
+	
+	private iBot botOpponent, botPlayerIfDemo;
+	
 	private boolean isPvp = false;
-	private boolean isWaitingForUserToChooseACard = false;
-	
-	private int mScreenWidth, mScreenHeight, mTopMargin, mFieldWidth, mFieldHeight;
-	private TossView mToss;
-	private HandView mHand; 
-	
-	private Card[] mPlayerDeck, mOpponentDeck;
-	private String[] mWonCards, mLoseCards;
-	private Engine mEngine;
-	private iBot mRobot, mFakePlayer;
-	private Card mCurrentCard;
-	private ProgressDialog mWaitingForOpponent;
+	private boolean isBotVsBot = false;
+	private boolean isRegleRandom, isRegleOpen, isRegleIdentique, isReglePlus, isRegleCombo, isRegleMemeMur, isRegleElementaire ;
+	private RewardRule rewardRule;
+	private boolean isWaitingForUserToChooseACard;
 	
 	public void onCreate(Bundle b) 
     {
@@ -88,235 +78,115 @@ public class Game extends Activity implements EventFiredListener
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.game);
-
-        isPvp = getIntent().getBooleanExtra("PvP", false);
-        boolean serveur = getIntent().getBooleanExtra("Serveur", false);
-        isBotVsBot = getIntent().getBooleanExtra("BotVsBot", false);
-        if (isBotVsBot) {
-        	isRegleOpen = true;
-        } else {
-        	getRules();
+        
+        initRules();
+        
+        playerDeck = getRandomDeck(PLAYER);
+        opponentDeck = getRandomDeck(OPPONENT);
+        
+        mainLayout = (FrameLayout) findViewById(R.id.cardsLayout);
+        
+        final ViewTreeObserver viewTreeObserver = mainLayout.getViewTreeObserver();
+        if (viewTreeObserver.isAlive()) {
+        	viewTreeObserver.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+	            @Override
+	            public void onGlobalLayout() {
+	            	displayGame();
+	        		mainLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+	            }
+        	});
         }
         
-    	mScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
-    	mScreenHeight = getWindowManager().getDefaultDisplay().getHeight();
-		mTopMargin = ((int) 7.6 * mScreenHeight / 100);
-    	mFieldWidth = mScreenWidth / 2;
-		mFieldHeight = mScreenHeight - 6 * mScreenHeight / 100 - mTopMargin;
-        
-        if (isRegleRandom) {
-        	mPlayerDeck = getMyRandomDeck();
-        }
-        else 
-        {
-        	try
-        	{
-                //TODO
-        		mPlayerDeck = getMyRandomDeck();
-        	}
-        	catch (Exception e)
-        	{
-            	mPlayerDeck = getMyRandomDeck();
-        		e.printStackTrace();
-        	}
-        }
-
-        String pvpServerIp = "";
-        if (isPvp)
-        {
-        	pvpServerIp = getIntent().getExtras().getString("IpAddress");
-			mEngine = new Engine(this, mPlayerDeck, isPvp, serveur, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, pvpServerIp);
-			mEngine.addEventFiredListener(this);
-			if (serveur)
-			{
-				String ipAdress = mEngine.getIpAddress();
-				if (ipAdress != null) {
-					waitingForConnection(ipAdress, getPort());
-				}
-				else
-				{
-					Intent i = new Intent();
-					i.putExtra("isServer", serveur);
-					setResult(RESULT_CANCELED, i);
-					finish();
-				}
-			}
-        }
-        else
-		{        	
-        	mEngine = new Engine(this, mPlayerDeck, isPvp, serveur, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, pvpServerIp);
-			mEngine.addEventFiredListener(this);
-        	
-	        mOpponentDeck = randomDeckRobot(mPlayerDeck);
-	        
-			showDeck(PLAYER, mPlayerDeck);
-			showDeck(OPPONENT, mOpponentDeck);
-			
-			mRobot = new BotEasy(OPPONENT, mOpponentDeck, mEngine.getBoard(), mEngine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
-			if (isBotVsBot) {
-				mFakePlayer = new BotEasy(PLAYER, mPlayerDeck, mEngine.getBoard(), mEngine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
-			}
-			mRobot = new BotHard(OPPONENT, PLAYER, mOpponentDeck, mPlayerDeck, mEngine.getBoard(), mEngine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
-			
-			startGame();
-		}
+		engine = new Engine(this, playerDeck, isPvp, false, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, null);
+		engine.addEventFiredListener(this);
+		
+		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
     }
 	
-	private void getRules()
+	private void initRules()
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		isRegleRandom = prefs.getBoolean("RandomRule", false);
-		isRegleOpen = prefs.getBoolean("OpenRule", false);
-		isRegleIdentique = prefs.getBoolean("SameRule", false);
-		isReglePlus = prefs.getBoolean("PlusRule", false);
-		isRegleCombo = prefs.getBoolean("ComboRule", false);
-		isRegleMemeMur = prefs.getBoolean("SameWallRule", false);
-		isRegleElementaire = prefs.getBoolean("ElementRule", false);
 		
-		String reward = prefs.getString("RewardRule", "One");
+		isRegleRandom = prefs.getBoolean(getString(R.string.pref_rule_random_key), false);
+		isRegleOpen = prefs.getBoolean(getString(R.string.pref_rule_open_key), false);
+		isRegleIdentique = prefs.getBoolean(getString(R.string.pref_rule_same_key), false);
+		isReglePlus = prefs.getBoolean(getString(R.string.pref_rule_plus_key), false);
+		isRegleCombo = prefs.getBoolean(getString(R.string.pref_rule_combo_key), false);
+		isRegleMemeMur = prefs.getBoolean(getString(R.string.pref_rule_same_wall_key), false);
+		isRegleElementaire = prefs.getBoolean(getString(R.string.pref_rule_element_key), false);
+		
+		String reward = prefs.getString(getString(R.string.pref_rule_reward_key), "One");
 		if (reward.equals("Direct")) {
-			winningRule = RewardRule.Direct;
+			rewardRule = RewardRule.Direct;
 		}
 		else if (reward.equals("All")) {
-			winningRule = RewardRule.All;
+			rewardRule = RewardRule.All;
 		}
 		else {
-			winningRule = RewardRule.One;
+			rewardRule = RewardRule.One;
 		}
 	}
 	
-	private int getPort()
-	{
-		SharedPreferences customSharedPreference = getSharedPreferences("TripleTriad", Activity.MODE_PRIVATE);
-		int port = customSharedPreference.getInt("Port", 7666);
-		Log.d("Network Port", "actual value " + port);
-		return port;
-	}
-	
-	private void startGame()
-	{				
-		// Si regle Elementaire on dessine les elements
-		if (isRegleElementaire) {
+	private void displayGame() {
+    	layoutWidth = mainLayout.getWidth();
+    	layoutHeight = mainLayout.getHeight();
+    	fieldWidth = layoutWidth / 2;
+    	fieldHeight = layoutHeight;
+    	
+        showDeck(PLAYER, playerDeck);
+        showDeck(OPPONENT, opponentDeck);
+        
+        if (isRegleElementaire) {
 			drawElements();
 		}
-		
-		// Init toss
-		int startingPlayer = mEngine.getStartingPlayer();
-		mToss = new TossView(this, startingPlayer);
-		FrameLayout fl = (FrameLayout) this.findViewById(R.id.layout);    	
-		fl.addView(mToss);
-		mToss.animateToss();
+        	
+        startGame();
+	}
+	
+	private void startGame() {		
+		int startingPlayer = engine.getStartingPlayer();
 		
 		if (!isPvp)
 		{
 			if (startingPlayer == OPPONENT) {
-				fireOpponentMove(mRobot);
+				playOpponentBotMove(botOpponent);
 			}
 			else if (startingPlayer == PLAYER && isBotVsBot) {
-				fireOpponentMove(mFakePlayer);
+				playOpponentBotMove(botPlayerIfDemo);
 			}
 		}
-    }
-	
-	public void eventPvPGameReadyToStart(Card[] opponentD)
-	{
-		if (mWaitingForOpponent != null && mWaitingForOpponent.isShowing())
-		{
-			mWaitingForOpponent.dismiss();
-		}
-		
-		mOpponentDeck = opponentD;
-		Runnable start = new Runnable()
-		{
-			public void run() 
-			{
-				startGame();
-			}
-		};
-		runOnUiThread(start);
 	}
-	
-	/** Affiche les cartes d'un joueur (a gauche si joueur = 1, a droite sinon) */
-	private void showDeck(int joueur, Card[] deck) // Affiche les cartes sur le plateau
-    {    	
-    	FrameLayout fl = (FrameLayout) this.findViewById(R.id.layout);    	
-    	for (int i = 0; i < deck.length; i++)
-    	{
-			if (DEBUG) Log.d("Current card", deck[i].toString());
-    		CompleteCardView cardView = new CompleteCardView(this, deck[i]);
-    		deck[i].setCardView(cardView);
-    		cardView.setColor(joueur);
-    		cardView.resizePictures(mScreenWidth / 2 / 3, mScreenHeight / 4);
-    		
-    		if (joueur == OPPONENT) // Affichage des cartes � droite
-    		{
-	    		cardView.move(7 * mScreenWidth / 8 - cardView.getBitmap().getWidth() / 2, i*(mScreenHeight / 6) + ((mScreenHeight - ((mScreenHeight / 6) * 5)) / 6));
-	        	fl.addView(cardView);
-	        	if (!isRegleOpen) {
-	        		cardView.flipCard(); // Joueur ne voit pas les cartes de CPU
-	        	}
-    		}
-    		else if (joueur == PLAYER) // Affichage des cartes � gauche
-    		{
-    			try
-    			{
-    				cardView.move(mScreenWidth / 8 - cardView.getBitmap().getWidth() / 2, i*(mScreenHeight / 6) + ((mScreenHeight - ((mScreenHeight / 6) * 5)) / 6));
-    				fl.addView(cardView);
-    			}
-    			catch (Exception e) { e.printStackTrace(); }
-    		}
-    	}
-    }
-	
-	/** Génère un deck aléatoire pour le joueur robot de niveau équivalent */
-	private Card[] randomDeckRobot(Card[] myDeck)
-	{
-		Card[] robotDeck = new Card[myDeck.length];
-		DatabaseStream dbs = new DatabaseStream(this);
-		
-		for (int card = 0; card < myDeck.length; card++)
-		{
-			robotDeck[card] = dbs.getRandomCard(myDeck[card].getLevel());
-			if (card > 0) {
-				for (int j = 0; j < card; j++)
-				{
-					if (robotDeck[j].getFullName().equals(robotDeck[card].getFullName()))
-					{
-						card--;
-						break;
-					}
-				}
-			}
-		}
-		
-		dbs.close();
-		return robotDeck;
-	}
-	
-	/** Crée le deck à partir des cartes choisies par l'utilisateur */
-	private Card[] getMyRandomDeck()
+
+	/** Create a deck with random cards */
+	private Card[] getRandomDeck(int player)
 	{
 		int howMuch = (Engine.BOARD_SIZE + 1) / 2;
 		Card[] deck = new Card[howMuch];
-		DatabaseStream dbs = new DatabaseStream(this);
-		ArrayList<Card> mycards = dbs.getMyCards();
 		
-		// Génère howMuch entiers aléatoires différents
+		DatabaseStream dbs = new DatabaseStream(this);
+		ArrayList<Card> cardsAvailable;
+		if (player == PLAYER) {
+			cardsAvailable = dbs.getMyCards();
+		} else {
+			cardsAvailable = dbs.getAllCards();
+		}
+		dbs.close();
+		
 		int[] randoms = new int[howMuch];
 		Random random = new Random();
     	for (int i = 0; i < howMuch; i++)
     	{
-    		boolean existeDeja = false;
-    		int rand = random.nextInt(mycards.size() - 1) + 1;
+    		boolean alreadyInDeck = false;
+    		int rand = random.nextInt(cardsAvailable.size() - 1) + 1;
     		
     		for (int j = 0; j < i; j++)
     		{
     			if (randoms[j] == rand) {
-    				existeDeja = true;
+    				alreadyInDeck = true;
     			}
     		}
     		
-    		if (existeDeja) {
+    		if (alreadyInDeck) {
     			i -= 1;
     		}
     		else { 
@@ -326,112 +196,106 @@ public class Game extends Activity implements EventFiredListener
     	
 		for (int c = 0; c < howMuch; c++)
 		{
-			deck[c] = mycards.get(randoms[c]);			
-			if (DEBUG) Log.d("My Deck", deck[c].toString() + " added !");
+			deck[c] = cardsAvailable.get(randoms[c]);			
 		}
 		
-		dbs.close();
 		return deck;
 	}
 	
-	private void selectCard(Card card)
-	{
-		card.getCardView().move(card.getCardView().getPositionX() + card.getCardView().getRealWidth() * 1 / 3, card.getCardView().getPositionY());
-		card.setSelected(true);
-	}
-	
-	private void unselectCards(int joueur)
-	{
-		if (joueur == PLAYER)
-		{
-			for (Card card : mPlayerDeck)
-			{
-				if (card.isSelected()) {
-					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() * 1 / 3, card.getCardView().getPositionY());
-				}
-				card.setSelected(false);
-			}
-		}
-		else if (joueur == OPPONENT)
-		{
-			for (Card card : mOpponentDeck)
-			{
-				if (card.isSelected()) {
-					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() * 1 / 3, card.getCardView().getPositionY());
-				}
-				card.setSelected(false);
-			}
-		}
-	}
-	
-	private int getCell(int x, int y)
-	{
-		return y + 3 * x;
-	}
+	/** Display player's cards (left of the screen if player == 1, else at right of the screen) */
+	private void showDeck(int player, Card[] deck)
+    {    	
+    	FrameLayout fl = (FrameLayout) findViewById(R.id.cardsLayout);    	
+    	for (int i = 0; i < deck.length; i++)
+    	{
+    		CompleteCardView cardView = new CompleteCardView(this, deck[i]);
+    		deck[i].setCardView(cardView);
+    		cardView.setColor(player);
+    		cardView.resizePictures(layoutWidth / 2 / 3, layoutHeight / 4);
+    		
+    		if (player == OPPONENT)
+    		{
+	    		cardView.move(7 * layoutWidth / 8 - cardView.getBitmap().getWidth() / 2, i * (layoutHeight / 6) + ((layoutHeight - ((layoutHeight / 6) * 5)) / 6));
+	        	fl.addView(cardView);
+	        	if (!isRegleOpen) {
+	        		cardView.flipCard();
+	        	}
+    		}
+    		else if (player == PLAYER)
+    		{
+    			try
+    			{
+    				cardView.move(layoutWidth / 8 - cardView.getBitmap().getWidth() / 2, i * (layoutHeight / 6) + ((layoutHeight - ((layoutHeight / 6) * 5)) / 6));
+    				fl.addView(cardView);
+    			}
+    			catch (Exception e) { e.printStackTrace(); }
+    		}
+    	}
+    }
 	
 	public boolean onTouchEvent(MotionEvent event)
 	{
-		if (mEngine.isGameOver() && isWaitingForUserToChooseACard)
+		if (engine.isGameOver() && isWaitingForUserToChooseACard)
 		{
-			Card choosedCard = null;
-			for (Card card : mOpponentDeck)
+			Card chosenCard = null;
+			for (Card card : opponentDeck)
 	    	{
 	    		CompleteCardView cardView = card.getCardView();
 	    		if (event.getX() >= cardView.getPositionX() && event.getX() <= cardView.getPositionX() + cardView.getRealWidth())
 	    		{
 	    			if (event.getY() >= cardView.getPositionY() && event.getY() <= cardView.getPositionY() + cardView.getRealHeight())
 	    			{
-	    				choosedCard = card;
+	    				chosenCard = card;
+	    				break;
 	    			}
 	    		}
 	    	}
 			
-			if (choosedCard != null) {
-				oneCardRewardChoosed(choosedCard);
+			if (chosenCard != null) {
+				chosenCard.getCardView().swapColor();
+				isWaitingForUserToChooseACard = false;
+				oneCardRewardChoosed(chosenCard);
+				return true;
 			}
-	    				
+			return false;
 		}
-		else if (!mEngine.isGameOver() && mEngine.isPlayerTurn() && !isBotVsBot)
+		else if (!engine.isGameOver() && engine.isPlayerTurn() && !isBotVsBot)
 		{
 			if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE)
 	    	{
-	    		for (Card card : mPlayerDeck)
+	    		for (Card card : playerDeck)
 		    	{
 		    		CompleteCardView cardView = card.getCardView();
 		    		if (event.getX() >= cardView.getPositionX() && event.getX() <= cardView.getPositionX() + cardView.getRealWidth())
 		    		{
 		    			if (event.getY() >= cardView.getPositionY() && event.getY() <= cardView.getPositionY() + cardView.getRealHeight())
 		    			{
-		    				if (!card.isPlayed() && !card.equals(mCurrentCard)) 
+		    				if (!card.isPlayed() && !card.equals(selectedCard)) 
 		    				{
-			    				if (DEBUG) Log.d("Current Card", card.toString());
 		    					if (card.isSelected())
 		    					{
 		    						unselectCards(PLAYER);
-		    						mCurrentCard = null;
+		    						selectedCard = null;
 		    					}
 		    					else
 		    					{
 			    					unselectCards(PLAYER);
 		    						selectCard(card);
-		    						mCurrentCard = card;
+		    						selectedCard = card;
 		    					}
+		    		    		return true;
 		    				}
 		    			}
 		    		}
 		    	}
+	    		return false;
 	    	}
 			else if (event.getAction() == MotionEvent.ACTION_UP)
 			{
-				if (mToss != null) {
-					deleteToss();
-				}
-				
-				if (mCurrentCard == null && !mEngine.isGameOver()) // Le joueur n'a pas cliqué sur une carte de son Deck 
+				if (selectedCard == null && !engine.isGameOver())
 				{
-					// Si une carte est selectionnée 
 					Card selectedCard = null;
-					for (Card card : mPlayerDeck)
+					for (Card card : playerDeck)
 					{
 						if (card.isSelected())
 						{
@@ -439,194 +303,372 @@ public class Game extends Activity implements EventFiredListener
 						}
 					}
 					
-					if (selectedCard != null) // Une carte est selectionnée
+					if (selectedCard != null)
 					{
-						// Calcul de la case choisie
-						if (event.getX() >= (mScreenWidth / 4) && event.getX() <= (3 * (mScreenWidth / 4)))
+						if (event.getX() >= (layoutWidth / 4) && event.getX() <= (3 * (layoutWidth / 4)))
 	    				{
-
-		    				
-	    					if (event.getY() >= mTopMargin && event.getY() <= mTopMargin + mFieldHeight)
-	    					{
-	    						int boardX = ((int) ((event.getY() - mTopMargin) / (mFieldHeight / 3)));
-	    						int boardY = ((int) ((event.getX() - (mScreenWidth / 4)) / (mFieldWidth / 3)));
-	    						
-	    						int screenX = (mScreenWidth / 4) + (boardY * (mFieldWidth / 3));
-	    				    	int screenY = mTopMargin + (boardX * mFieldHeight / 3);
-	    						
-	    						// Vérifions si la case choisie est libre
-	    						int cell = getCell(boardX, boardY);
-	    						if (mEngine.isCellEmpty(cell))
-	    						{
-	    							// On joue le coup choisi par le joueur
-	    							selectedCard.getCardView().resizePictures(mFieldWidth / 3, mFieldHeight / 3);
-	    							selectedCard.setSelected(false);
-	    							selectedCard.getCardView().move(screenX, screenY);
-	    							mEngine.playCard(PLAYER, selectedCard, cell);
-	    							mHand.swapPlayer();
-	    							
-	    							// Puis on demande au robot de jouer si la partie n'est pas finie
-	    							if (!mEngine.isGameOver() && !isPvp) {
-	    								fireOpponentMove(mRobot);
-	    							}
-	    							else if (mEngine.isGameOver()) {
-	    								fireEndGame();
-	    							}
-	    						}
-	    					}
+    						int boardX = ((int) ((event.getY()) / (fieldHeight / 3)));
+    						int boardY = ((int) ((event.getX() - (layoutWidth / 4)) / (fieldWidth / 3)));
+    						
+    						int cell = getCell(boardX, boardY);
+    						if (engine.isCellEmpty(cell))
+    						{
+    							moveCardToTargetCell(selectedCard, boardX, boardY);
+    							engine.playCard(PLAYER, selectedCard, cell);
+    							
+    							if (!engine.isGameOver() && !isPvp) {
+    								new Thread(new Runnable() {
+										@Override
+										public void run() {
+											try {
+												Thread.sleep(TIME_BEFORE_OPPONENT_MOVE);
+											} catch (InterruptedException e) {}
+											
+											playOpponentBotMove(botOpponent);
+										}
+									}).start();
+    							}
+    							else if (engine.isGameOver()) {
+    								finishGame();
+    							}
+    						}
 	    				}
+			    		return true;
 					}
 				}
-				mCurrentCard = null;
+				selectedCard = null;
+	    		return true;
 			}
 		}
-    	return super.onTouchEvent(event);
+    	return false;
 	}
 	
-	private void fireOpponentMove(final iBot bot)
-	{
-		final Activity activity = this;
-		new Thread() 
-    	{
-			public void run() 
-    		{
-    			try
-    			{
-    				sleep(SLEEP_TIME_BEFORE);
-    				
-    				final Runnable runInUIThread = new Runnable() 
-    				{
-						public void run() 
-    		    	    {
-							opponentMove(bot);
-    		    	    }
-    		    	};
-    		    	  
-    		    	activity.runOnUiThread(runInUIThread);
-    			}
-    			catch (Exception e)
-    			{
-    				e.printStackTrace();
-    			}
-    	    	
-		    }
-    	}.start();
+	private void moveCardToTargetCell(Card card, int x, int y) {
+		int screenX = (layoutWidth / 4) + (y * (fieldWidth / 3));
+    	int screenY = x * (fieldHeight / 3);
+    	
+    	card.getCardView().resizePictures(fieldWidth / 3, fieldHeight / 3);
+    	card.setSelected(false);
+    	card.getCardView().move(screenX, screenY);
 	}
 	
-	private void opponentMove(iBot bot)
+	private void playOpponentBotMove(final iBot bot)
 	{
-		if (mToss != null) {
-			deleteToss();
-		}
-		
 		Action move = bot.nextMove();
-		Card card = move.getCard();
-		int cell = move.getCell();
+		final Card card = move.getCard();
+		final int cell = move.getCell();
 		
-		if (!isRegleOpen) { 
-			card.getCardView().flipCard();
-		}
-		card.getCardView().resizePictures(mFieldWidth / 3, mFieldHeight / 3);
+
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				if (!card.getCardView().isFaceUp()) { 
+					card.getCardView().flipCard();
+				}
+				
+				int boardX = cell / 3;
+				int boardY = cell % 3;
+				moveCardToTargetCell(card, boardX, boardY);  
+				engine.playCard(bot.getPlayerValue(), card, cell);
+				
+				if (engine.isGameOver()) {
+					finishGame();
+				}
+			}
+		}); 		
 		
-		int boardX = cell / 3;
-		int boardY = cell % 3;
-		int screenX = (mScreenWidth / 4) + (boardY * (mFieldWidth / 3));
-    	int screenY = mTopMargin + (boardX * mFieldHeight / 3);
-		card.getCardView().move(screenX, screenY);	    		
-		
-		mEngine.playCard(bot.getPlayerValue(), card, cell);
-		if (mHand != null) {
-			mHand.swapPlayer();
-		}
-		if (DEBUG) Log.d("Next Move", card + " en " + cell + ", gain " + move.getValue());
-		
-		if (mEngine.isGameOver()) {
-			fireEndGame();
-		}
-		else if (isBotVsBot)
+		if (isBotVsBot && !engine.isGameOver())
 		{
 			iBot botToPlay;
-			if (bot.equals(mRobot)) {
-				botToPlay = mFakePlayer;
+			if (bot.equals(botOpponent)) {
+				botToPlay = botPlayerIfDemo;
 			}
 			else {
-				botToPlay = mRobot;
+				botToPlay = botOpponent;
 			}
-			fireOpponentMove(botToPlay);
+			playOpponentBotMove(botToPlay);
 		}
 	}
 	
-	private void fireEndGame()
+	private void finishGame()
 	{
-		new Thread() 
-    	{
-			public void run() 
-    		{
-    			try
-    			{
-    				sleep(SLEEP_TIME_BEFORE);
-    				
-    				final Runnable runInUIThread = new Runnable() 
-    				{
-						public void run() 
-    		    	    {
-							endGame();
-    		    	    }
-    		    	};
-    		    	  
-    		    	runOnUiThread(runInUIThread);
-    			}
-    			catch (Exception e)
-    			{
-    				e.printStackTrace();
-    			}
-    	    	
-		    }
-    	}.start();
-	}
-	
-	private void endGame()
-	{
-		FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
-		ImageView v = new ImageView(this);
+		FrameLayout fl = (FrameLayout) findViewById(R.id.cardsLayout);
+		ImageView result = new ImageView(this);
 		
-		int playerScore = mEngine.getPlayerScore();
-		if (Game.DEBUG) Log.d("PlayerScore", playerScore+"");
-		int opponentScore = mEngine.getOpponentScore();
-		if (Game.DEBUG) Log.d("OpponnentScore", opponentScore+"");
+		int playerScore = engine.getPlayerScore();
+		int opponentScore = engine.getOpponentScore();
 		if (playerScore > opponentScore) {
-			v.setImageResource(R.drawable.win);
+			result.setImageResource(R.drawable.win);
 		}
 		else if (playerScore == opponentScore) {
-			v.setImageResource(R.drawable.draw);
+			result.setImageResource(R.drawable.draw);
 		}
 		else {
-			v.setImageResource(R.drawable.lose);
+			result.setImageResource(R.drawable.lose);
 		}
 		
-		fl.addView(v);
-		timerToHide(v, true);
+		fl.addView(result);
+		hideViewAfterAndRun(result, TIME_BEFORE_HIDING_RESULT, new Runnable() {
+			@Override
+			public void run() {
+				displayRewardScreen();
+			}
+		});
 	}
 	
-	// Supprime la main au centre de l'�cran indiquant quel joueur doit commencer
-	public void deleteToss()
-	{		
-		FrameLayout fl = (FrameLayout) this.findViewById(R.id.layout);
-		fl.removeView(mToss);
-		mToss = null;
-		
-		// Ajout de la main sous les cartes du joueur dont le tour est en cours
-		
-		int player;
-		if (mEngine.isPlayerTurn()) {
-			player = PLAYER;
-		}
-		else {
-			player = OPPONENT;
+	private void displayRewardScreen() {
+		if (isBotVsBot)
+		{
+			setResult(RESULT_OK);
+			finish();
+			return;
 		}
 		
-		mHand = new HandView(this, player, mScreenWidth, mScreenHeight);
-		fl.addView(mHand);
+		ImageView background = (ImageView) findViewById(R.id.background);
+		background.setImageResource(R.drawable.reward);
+		
+		int winner = 0;
+		if (engine.getPlayerScore() > engine.getOpponentScore())
+		{
+			winner = PLAYER;
+			DatabaseStream dbs = new DatabaseStream(this);
+			dbs.setGils(dbs.getGils() + Engine.GILS_WIN);
+			dbs.close();
+		}
+		else if (engine.getOpponentScore() > engine.getPlayerScore())
+		{
+			winner = OPPONENT;
+			DatabaseStream dbs = new DatabaseStream(this);
+			dbs.setGils(dbs.getGils() + Engine.GILS_LOOSE);
+			dbs.close();
+		}
+		else // Draw
+		{
+			DatabaseStream dbs = new DatabaseStream(this);
+			dbs.setGils(dbs.getGils() + Engine.GILS_DRAW);
+			dbs.close();   
+			
+			if (rewardRule != RewardRule.Direct)
+			{
+				setResult(RESULT_OK);
+				finish();
+				return;
+			} 		    					
+		}
+		
+		for (Card c : playerDeck) {
+			mainLayout.removeView(c.getCardView());
+		}
+		for (Card c : opponentDeck) {
+			mainLayout.removeView(c.getCardView());
+		}
+		
+		displayDeckForReward(PLAYER, playerDeck);
+		displayDeckForReward(OPPONENT, opponentDeck);
+		
+		mainLayout.invalidate();
+		
+		if (rewardRule == RewardRule.All)
+			{
+				if (winner == PLAYER)
+				{
+					wonCards = new String[5];
+					loseCards = new String[0];
+					for (int c = 0; c < opponentDeck.length; c++)
+					{
+						Card card = opponentDeck[c];
+						card.getCardView().swapColor();
+						wonCards[c] = card.getFullName();
+					}
+				}
+				else if (winner == OPPONENT)
+				{
+					wonCards = new String[0];
+					loseCards = new String[5];
+					for (int c = 0; c < playerDeck.length; c++)
+					{
+						Card card = playerDeck[c];
+						card.getCardView().swapColor();
+						loseCards[c] = card.getFullName();
+					}
+				}
+				handler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						endReward();
+					}
+				}, TIME_BEFORE_GOING_BACK_IF_BOT_WON);
+			}
+			else if (rewardRule == RewardRule.Direct)
+			{
+				int iLose = 0;
+				loseCards = new String[5];
+				int iWon = 0;
+				wonCards = new String[5];
+				
+				for (int c = 0; c < playerDeck.length; c++)
+				{
+					Card card = playerDeck[c];
+					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
+					{
+						card.getCardView().swapColor();
+						loseCards[iLose] = card.getFullName();
+						iLose++;
+					}
+				}
+				for (int c = 0; c < opponentDeck.length; c++)
+				{
+					Card card = opponentDeck[c];
+					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
+					{
+						card.getCardView().swapColor();
+						wonCards[iWon] = card.getFullName();
+						iWon++;
+					}
+				}
+				handler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						endReward();
+					}
+				}, TIME_BEFORE_GOING_BACK_IF_BOT_WON);
+			}
+			else
+			{
+				if (winner == PLAYER) {
+					isWaitingForUserToChooseACard = true;
+				}
+				else if(winner == OPPONENT && !isPvp) {
+					botChooseBetterCard();
+				}
+			}
+	}
+	
+	private void oneCardRewardChoosed(final Card card)
+	{				
+		if (isPvp) {
+			engine.sendLostCard(card);
+		}
+
+		wonCards = new String[1];
+		wonCards[0] = card.getFullName();
+		
+		handler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				endReward();
+			}
+		}, TIME_BEFORE_GOING_BACK);
+	}
+	
+	private void botChooseBetterCard()
+	{
+		loseCards = new String[1];
+		Card loseC = playerDeck[0]; 
+		for (Card card : playerDeck)
+		{
+			if (card.getLevel() > loseC.getLevel() || (card.getLevel() == loseC.getLevel() && card.getTotal() > loseC.getTotal())) {
+				loseC = card;
+			}
+		}
+		loseCards[0] = loseC.getFullName();
+		loseC.getCardView().swapColor();
+
+		handler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				endReward();
+			}
+		}, TIME_BEFORE_GOING_BACK_IF_BOT_WON);
+	}
+	
+	private void endReward()
+	{
+		DatabaseStream dbs = new DatabaseStream(this);
+		if (wonCards != null)
+		{
+			for (String cardFullName : wonCards)
+			{
+				if (cardFullName != null && cardFullName != "") {
+					dbs.nouvelleCarte(cardFullName);
+				}
+			}
+		}
+		if (loseCards != null)
+		{
+			for (String cardFullName : loseCards)
+			{
+				if (cardFullName != null && cardFullName != "") {
+					dbs.supprimerCarte(cardFullName);
+				}
+			}
+		}
+		dbs.close();
+		
+		setResult(RESULT_OK);
+		finish();
+	}
+	
+	private void displayDeckForReward(int player, Card[] deck) {
+		for (int i = 0; i < deck.length; i++)
+    	{
+    		CompleteCardView cardView = deck[i].getCardView();
+    		cardView.resetElement();
+			mainLayout.addView(cardView);
+    		cardView.resizePictures(fieldWidth / 3, fieldHeight / 3);
+    		
+    		if (rewardRule == RewardRule.Direct) {
+    			cardView.setAlternativeColor(cardView.getColor());
+    		}
+			cardView.setColor(player);
+			if (!cardView.isFaceUp())
+				cardView.flipCard();
+
+			int marge = ((layoutWidth / 5) - cardView.getRealWidth()) / 2;
+    		if (player == PLAYER)
+    		{
+    			cardView.move((i * (layoutWidth / 5)) + marge, (layoutHeight / 4) - (cardView.getRealHeight() / 2));
+    		}
+    		else if (player == OPPONENT)
+    		{
+    			cardView.move((i * (layoutWidth / 5)) + marge, (3 * layoutHeight / 4) - (cardView.getRealHeight() / 2));
+    		}
+    	}
+	}
+
+	private int getCell(int x, int y)
+	{
+		return y + 3 * x;
+	}
+	
+	private void selectCard(Card card)
+	{
+		card.getCardView().move(card.getCardView().getPositionX() + card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+		card.setSelected(true);
+	}
+	
+	private void unselectCards(int joueur)
+	{
+		if (joueur == PLAYER)
+		{
+			for (Card card : playerDeck)
+			{
+				if (card.isSelected()) {
+					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+				}
+				card.setSelected(false);
+			}
+		}
+		else if (joueur == OPPONENT)
+		{
+			for (Card card : opponentDeck)
+			{
+				if (card.isSelected()) {
+					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+				}
+				card.setSelected(false);
+			}
+		}
 	}
 	
 	private void drawElements()
@@ -643,8 +685,8 @@ public class Game extends Activity implements EventFiredListener
 			bitmapsElements.put("Water", BitmapFactory.decodeStream(getResources().getAssets().open("Water.png")));
 			bitmapsElements.put("Ice", BitmapFactory.decodeStream(getResources().getAssets().open("Ice.png")));
 			
-			String[] elements = mEngine.getElements();
-			FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
+			String[] elements = engine.getElements();
+			FrameLayout fl = (FrameLayout) findViewById(R.id.cardsLayout);
 			
 			for (int e = 0; e < Engine.BOARD_SIZE; e++)
 			{
@@ -653,8 +695,8 @@ public class Game extends Activity implements EventFiredListener
 				
 				if (bm != null)
 				{
-					int x = (mScreenWidth / 4) + ((e % 3) * (mFieldWidth / 3)) + ((mFieldWidth /3) / 2) - (bm.getWidth() / 2);
-			    	int y = mTopMargin + ((e / 3) * mFieldHeight / 3) + ((mFieldHeight /3) / 2) - (bm.getHeight() / 2);
+					int x = (layoutWidth / 4) + ((e % 3) * (fieldWidth / 3)) + ((fieldWidth /3) / 2) - (bm.getWidth() / 2);
+			    	int y = ((e / 3) * fieldHeight / 3) + ((fieldHeight /3) / 2) - (bm.getHeight() / 2);
 					ElementView elementView = new ElementView(this, bm, x, y);
 					fl.addView(elementView);
 				}
@@ -663,447 +705,89 @@ public class Game extends Activity implements EventFiredListener
 		catch (Exception e) { e.printStackTrace(); }
 	}
 	
-	public void waitingForConnection(final String serverIp, final int port)
+	private void hideViewAfterAndRun(final View view, int after, final Runnable runnable)
 	{
-		Runnable runn = new Runnable()
-		{
-			public void run() 
-			{
-				mWaitingForOpponent = new ProgressDialog(Game.this);
-				mWaitingForOpponent.setCancelable(true);
-				mWaitingForOpponent.setTitle(R.string.waiting_for_client);
-				mWaitingForOpponent.setMessage(getString(R.string.ipaddress) + " " + serverIp + "\n" + getString(R.string.port) + " " + port);
-				mWaitingForOpponent.setOnCancelListener(new OnCancelListener() 
+		handler.postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				mainLayout.removeView(view);
+				
+				if (runnable != null) {
+					handler.post(runnable);
+				}
+			} 
+		}, after);
+	}
+	
+	private void hideViewAfter(final View view, int after) {
+		hideViewAfterAndRun(view, after, null);
+	}
+	
+	private void displayEvent(final int resource, final int text) {
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				try
 				{
-					public void onCancel(DialogInterface dialog) 
-					{
-						if (mEngine != null) {
-							mEngine.shutdownSocket();
-						}
-						setResult(RESULT_FIRST_USER);
-						finish();
-					}
-				});
-				mWaitingForOpponent.show();
-			}
-		};
-		runOnUiThread(runn);
-	}
-	
-	public void eventOpponentPlayed(Action move)
-	{
-		Card card = move.getCard();
-		int cell = move.getCell();
-		
-		if (!isRegleOpen) {
-			card.getCardView().flipCard();
-		}
-		card.getCardView().resizePictures(mFieldWidth / 3, mFieldHeight / 3);
-		
-		int boardX = cell / 3;
-		int boardY = cell % 3;
-		int screenX = (mScreenWidth / 4) + (boardY * (mFieldWidth / 3));
-    	int screenY = mTopMargin + (boardX * mFieldHeight / 3);
-		card.getCardView().move(screenX, screenY);
-		mEngine.playCard(OPPONENT, card, cell);	
-		
-		if (mToss != null) {
-			deleteToss();
-		}
-		else if (mHand != null) { 
-			mHand.swapPlayer();
-		}
-		
-		if (mEngine.isGameOver()) {
-			fireEndGame();		
-		}
-	}
-
-	public void eventSameWallTriggered() 
-	{
-		if (Game.DEBUG) Log.d("SameWallRule", "POPUP");
-		try
-		{
-			FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
-			ImageView v = new ImageView(this);
-			v.setImageResource(R.drawable.samewall);
-			fl.addView(v);
-			timerToHide(v, false);
-		}
-		catch (StackOverflowError e)
-		{
-			e.printStackTrace();
-			Toast.makeText(this, "SAME WALL", SLEEP_TIME_POPUP).show();
-		}
-	}
-
-	public void eventSameTriggered() 
-	{
-		if (Game.DEBUG) Log.d("SameRule", "POPUP");
-		try
-		{
-			FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
-			ImageView v = new ImageView(this);
-			v.setImageResource(R.drawable.same);
-			fl.addView(v);
-			timerToHide(v, false);
-		}
-		catch (StackOverflowError e)
-		{
-			e.printStackTrace();
-			Toast.makeText(this, "SAME", SLEEP_TIME_POPUP).show();
-		}
-	}
-	
-	public void eventPlusTriggered() 
-	{
-		if (Game.DEBUG) Log.d("PlusRule", "POPUP");
-		try
-		{
-			FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
-			ImageView v = new ImageView(this);
-			v.setImageResource(R.drawable.plus);
-			fl.addView(v);
-			timerToHide(v, false);
-		}
-		catch (StackOverflowError e)
-		{
-			e.printStackTrace();
-			Toast.makeText(this, "PLUS", SLEEP_TIME_POPUP).show();
-		}
-	}
-
-	public void eventComboTriggered() 
-	{
-		try
-		{
-			FrameLayout fl = (FrameLayout) findViewById(R.id.layout);
-			ImageView v = new ImageView(this);
-			v.setImageResource(R.drawable.combo);
-			fl.addView(v);
-			timerToHide(v, false);
-		}
-		catch (StackOverflowError e)
-		{
-			e.printStackTrace();
-			Toast.makeText(this, "COMBO", SLEEP_TIME_POPUP).show();
-		}
-	}
-	
-	private void timerToHide(final View v, final boolean isEndGame)
-	{
-		new Thread()
-		{
-			public void run()
-			{
-				try
-    			{
-					if (isEndGame) {
-						sleep(SLEEP_TIME_ENDGAME);
-					}
-					else {
-						sleep(SLEEP_TIME_POPUP);
-					}
-    				
-    				final Runnable runInUIThread = new Runnable() 
-    				{
-						public void run() 
-    		    	    {
-    		    			v.setVisibility(View.GONE);
-    		    			if (isEndGame)
-    		    			{
-    		    				if (isBotVsBot)
-    		    				{
-    		    					setResult(RESULT_OK);
-    		    					finish();
-    		    					return;
-    		    				}
-    		    				
-    		    				int winner = 0;
-    		    				if (mEngine.getPlayerScore() > mEngine.getOpponentScore()) // Win
-    		    				{
-    		    					winner = PLAYER;
-    		    					DatabaseStream dbs = new DatabaseStream(v.getContext());
-    		    					dbs.setGils(dbs.getGils() + Engine.GILS_WIN);
-    		    					dbs.close();
-    		    				}
-    		    				else if (mEngine.getOpponentScore() > mEngine.getPlayerScore()) // Lose
-    		    				{
-    		    					winner = OPPONENT;
-    		    					DatabaseStream dbs = new DatabaseStream(v.getContext());
-    		    					dbs.setGils(dbs.getGils() + Engine.GILS_LOOSE);
-    		    					dbs.close();
-    		    				}
-    		    				else // Draw
-    		    				{
-    		    					DatabaseStream dbs = new DatabaseStream(v.getContext());
-    		    					dbs.setGils(dbs.getGils() + Engine.GILS_DRAW);
-    		    					dbs.close();   
-    		    					
-        		    				if (winningRule != RewardRule.Direct) // m�me en cas de Draw la r�gle directe s'applique
-        		    				{
-        		    					setResult(RESULT_OK);
-        		    					finish();
-        		    					return;
-        		    				} 		    					
-    		    				}
-    		    				
-    		    				
-    		    				cleanAll();
-    		    				showDeckForReward(Game.PLAYER, mPlayerDeck);
-    		    		        showDeckForReward(Game.OPPONENT, mOpponentDeck);
-    		    		        
-    		    		        if (winningRule == RewardRule.All)
-        		    			{
-        		    				if (winner == PLAYER)
-        		    				{
-        		    					mWonCards = new String[5];
-        		    					mLoseCards = new String[0];
-        		    					for (int c = 0; c < mOpponentDeck.length; c++)
-        		    					{
-        		    						Card card = mOpponentDeck[c];
-        		    						card.getCardView().swapColor();
-        		    						mWonCards[c] = card.getFullName();
-        		    					}
-        		    				}
-        		    				else if (winner == OPPONENT)
-        		    				{
-        		    					mWonCards = new String[0];
-        		    					mLoseCards = new String[5];
-        		    					for (int c = 0; c < mPlayerDeck.length; c++)
-        		    					{
-        		    						Card card = mPlayerDeck[c];
-        		    						card.getCardView().swapColor();
-        		    						mLoseCards[c] = card.getFullName();
-        		    					}
-        		    				}
-        		    				triggerEndReward();
-        		    			}
-        		    			else if (winningRule == RewardRule.Direct)
-        		    			{
-        		    				int iLose = 0;
-        		    				mLoseCards = new String[5];
-        		    				int iWon = 0;
-        		    				mWonCards = new String[5];
-        		    				
-        		    				for (int c = 0; c < mPlayerDeck.length; c++)
-        		    				{
-        		    					Card card = mPlayerDeck[c];
-        		    					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
-        		    					{
-        		    						card.getCardView().swapColor();
-        		    						mLoseCards[iLose] = card.getFullName();
-        		    						iLose++;
-        		    					}
-        		    				}
-        		    				for (int c = 0; c < mOpponentDeck.length; c++)
-        		    				{
-        		    					Card card = mOpponentDeck[c];
-        		    					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
-        		    					{
-        		    						card.getCardView().swapColor();
-        		    						mWonCards[iWon] = card.getFullName();
-        		    						iWon++;
-        		    					}
-        		    				}
-        		    				triggerEndReward();
-        		    			}
-        		    			else
-        		    			{
-        		    				if (winner == PLAYER) {
-        		    					isWaitingForUserToChooseACard = true;
-        		    				}
-        		    				else if(winner == OPPONENT && !isPvp) {
-    		    						botChooseBetterCard();
-        		    				}
-        		    			}
-    		    			}
-    		    	    }
-    		    	};
-    		    	  
-    		    	runOnUiThread(runInUIThread);
-    			}
-    			catch (Exception e)
-    			{
-    				e.printStackTrace();
-    			}
-			}
-		}.start();
-	}
-	
-	public void eventOpponentChoosedReward(final Card card)
-	{
-		card.getCardView().swapColor();
-		mLoseCards = new String[1];
-		mLoseCards[0] = card.getFullName();
-		
-		Runnable r = new Runnable()
-		{
-			public void run()
-			{
-				triggerEndReward();
-			}
-		};
-		new Thread(r).start();
-	}
-	
-	private void oneCardRewardChoosed(final Card card)
-	{		
-		if (isPvp) {
-			mEngine.sendLostCard(card);
-		}
-		
-		card.getCardView().swapColor();
-		isWaitingForUserToChooseACard = false;
-		mWonCards = new String[1];
-		mWonCards[0] = card.getFullName();
-		
-		Runnable r = new Runnable()
-		{
-			public void run()
-			{
-				triggerEndReward();
-			}
-		};
-		new Thread(r).start();
-	}
-	
-	private void botChooseBetterCard()
-	{
-		mLoseCards = new String[1];
-		Card loseC = mPlayerDeck[0]; 
-		for (Card card : mPlayerDeck)
-		{
-			if (card.getLevel() > loseC.getLevel() || (card.getLevel() == loseC.getLevel() && card.getTotal() > loseC.getTotal())) {
-				loseC = card;
-			}
-		}
-		mLoseCards[0] = loseC.getFullName();
-		loseC.getCardView().swapColor();
-		
-		triggerEndReward();
-	}
-	
-	private void cleanAll()
-	{
-		FrameLayout fl = (FrameLayout) this.findViewById(R.id.layout);
-		fl.removeAllViews();
-	}
-	
-	private void showDeckForReward(int player, Card[] deck)
-	{
-		FrameLayout fl = (FrameLayout) this.findViewById(R.id.layout);
-		for (int i = 0; i < deck.length; i++)
-    	{
-    		CompleteCardView cardView = deck[i].getCardView();
-    		cardView.resetElement();
-			fl.addView(cardView);
-    		cardView.resizePictures(mFieldWidth / 3, mFieldHeight / 3);
-    		
-    		if (winningRule == RewardRule.Direct) {
-    			cardView.setAlternativeColor(cardView.getColor());
-    		}
-			cardView.setColor(player);
-			if (!cardView.isFaceUp())
-				cardView.flipCard();
-
-			int marge = ((mScreenWidth / 5) - cardView.getRealWidth()) / 2;
-    		if (player == Game.PLAYER) // Affichage des cartes en haut
-    		{
-    			cardView.move((i * (mScreenWidth / 5)) + marge, (mScreenHeight / 4) - (cardView.getRealHeight() / 2));
-    		}
-    		else if (player == Game.OPPONENT) // Affichage des cartes en bas
-    		{
-    			cardView.move((i * (mScreenWidth / 5)) + marge, (3 * mScreenHeight / 4) - (cardView.getRealHeight() / 2));
-    		}
-    	}
-	}
-	
-	private void endReward()
-	{
-		DatabaseStream dbs = new DatabaseStream(this);
-		if (mWonCards != null)
-		{
-			for (String cardFullName : mWonCards)
-			{
-				if (cardFullName != null && cardFullName != "") {
-					dbs.nouvelleCarte(cardFullName);
+					ImageView event = new ImageView(Game.this);
+					event.setImageResource(resource);
+					mainLayout.addView(event);
+					
+					hideViewAfter(event, TIME_BEFORE_HIDING_EVENT);
+				}
+				catch (Exception e)
+				{
+					Toast.makeText(Game.this, getString(text), TIME_BEFORE_HIDING_EVENT).show();
 				}
 			}
-		}
-		if (mLoseCards != null)
-		{
-			for (String cardFullName : mLoseCards)
-			{
-				if (cardFullName != null && cardFullName != "") {
-					dbs.supprimerCarte(cardFullName);
-				}
-			}
-		}
-		dbs.close();
+		});
+	}
+	
+	@Override
+	public void eventSameWallTriggered() {
+		displayEvent(R.drawable.samewall, R.string.event_same_wall);
+	}
 
-		setResult(RESULT_OK);
-		finish();
-		return;
+	@Override
+	public void eventSameTriggered() {
+		displayEvent(R.drawable.same, R.string.event_same);
 	}
-	
-	private void triggerEndReward()
-	{
-		new Thread()
-		{
-			public void run()
-			{
-				try
-    			{
-					sleep(SLEEP_TIME_ENDGAME);
-    				
-    				final Runnable runInUIThread = new Runnable() 
-    				{
-						public void run() 
-    		    	    {
-    		    			endReward();
-    		    	    }
-    		    	};
-    		    	  
-    		    	runOnUiThread(runInUIThread);
-    			}
-    			catch (Exception e)
-    			{
-    				e.printStackTrace();
-    			}
+
+	@Override
+	public void eventPlusTriggered() {
+		displayEvent(R.drawable.plus, R.string.event_plus);
+	}
+
+	@Override
+	public void eventComboTriggered() {
+		displayEvent(R.drawable.combo, R.string.event_combo);
+	}
+
+	@Override
+	public void eventOpponentPlayed(Action move) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void eventPvPGameReadyToStart(Card[] opponentDeck) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void eventOpponentChoosedReward(final Card card) {
+		handler.post(new Runnable() {
+			@Override
+			public void run() {
+				card.getCardView().swapColor();
+				
+				loseCards = new String[1];
+				loseCards[0] = card.getFullName();
+				
+				endReward();
 			}
-		}.start();
+		});
 	}
-	
-	protected void onPause() 
-	{
-		// On termine la partie en cours
-		setResult(RESULT_CANCELED);
-		finish();
-		super.onPause();
-	}
-	
-	protected void onDestroy() 
-	{
-		if (mEngine != null) {
-			mEngine.shutdownSocket();
-		}
-		super.onDestroy();
-	}
-	
-	public boolean onKeyDown(int keyCode, KeyEvent event) 
-	{
-		if ((keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_HOME) && mEngine.isGameStarted() && !isBotVsBot)
-		{
-			return true;
-		}
-		else if (keyCode == KeyEvent.KEYCODE_BACK)
-		{
-			setResult(RESULT_FIRST_USER);
-			if (mEngine != null) {
-				mEngine.shutdownSocket();
-			}
-		}
-		return super.onKeyDown(keyCode, event);
-	}
+
 }

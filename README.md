@@ -29,11 +29,11 @@ If you see some ugly code, I apologize but it's "normal". I wrote this game when
 What's working
 ====================
 * Settings
-* Demo mode (IA against IA)
+* Basic mode (using user defined rules) : User against Hard robot
 * Runs on both smartphones and tablets
 
 ToDo
 ====================
-* Rewrite game view & engine
-* Make botHard works
+* Rewrite engine
+* Finish new Game renderer to use not only random decks and pvp
 * Optimize for Android 3+

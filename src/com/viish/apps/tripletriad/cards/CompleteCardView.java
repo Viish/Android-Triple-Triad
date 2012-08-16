@@ -125,7 +125,7 @@ public class CompleteCardView extends ImageView
 	
 	public void flipCard()
 	{
-		visible = ! visible;
+		visible = !visible;
 		
 		invalidate();
 	}
@@ -258,7 +258,7 @@ public class CompleteCardView extends ImageView
 		return resizedBitmap;
 	}
 	
-	private void applyRotation(float start, float end) // Rotation 3D de l'image, avec changement de couleur au milieu !
+	private void applyRotation(float start, float end) 
 	{
 		final CompleteCardView cp = this;
 		
