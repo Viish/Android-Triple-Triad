@@ -44,13 +44,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 public class Game extends Activity implements EventFiredListener
 {
+	public static final int NOONE = Engine.NOONE;
 	public static final int PLAYER = Engine.PLAYER;
 	public static final int OPPONENT = Engine.OPPONENT;
 	
-	public static final int TIME_BEFORE_OPPONENT_MOVE = 1500;
 	public static final int TIME_BEFORE_HIDING_EVENT = 1000;
-	public static final int TIME_BEFORE_HIDING_RESULT = 3000;
+	public static final int TIME_BEFORE_OPPONENT_MOVE = 1500;
+	public static final int TIME_BEFORE_TRIGGER_END = 1500;
 	public static final int TIME_BEFORE_GOING_BACK = 2000;
+	public static final int TIME_BEFORE_HIDING_RESULT = 3000;
+	public static final int TIME_BEFORE_GOING_BACK_IF_AUTO_REWARD = 4000;
 	public static final int TIME_BEFORE_GOING_BACK_IF_BOT_WON = 4000;
 	
 	private Handler handler = new Handler();
@@ -105,7 +108,8 @@ public class Game extends Activity implements EventFiredListener
         final ViewTreeObserver viewTreeObserver = mainLayout.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
         	viewTreeObserver.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
-	            @Override
+	            @SuppressWarnings("deprecation")
+				@Override
 	            public void onGlobalLayout() {
 	            	displayGame();
 	        		mainLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
@@ -415,31 +419,51 @@ public class Game extends Activity implements EventFiredListener
 	
 	private void finishGame()
 	{
-		FrameLayout fl = (FrameLayout) findViewById(R.id.cardsLayout);
-		ImageView result = new ImageView(this);
-		
-		int playerScore = engine.getPlayerScore();
-		int opponentScore = engine.getOpponentScore();
-		if (playerScore > opponentScore) {
-			result.setImageResource(R.drawable.win);
-		}
-		else if (playerScore == opponentScore) {
-			result.setImageResource(R.drawable.draw);
-		}
-		else {
-			result.setImageResource(R.drawable.lose);
-		}
-		
-		fl.addView(result);
-		hideViewAfterAndRun(result, TIME_BEFORE_HIDING_RESULT, new Runnable() {
+		handler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				displayRewardScreen();
+				
+				FrameLayout fl = (FrameLayout) findViewById(R.id.cardsLayout);
+				ImageView result = new ImageView(Game.this);
+				
+				DatabaseStream dbs = new DatabaseStream(Game.this);
+				
+				int playerScore = engine.getPlayerScore();
+				int opponentScore = engine.getOpponentScore();
+				int tempWin;
+				if (playerScore > opponentScore) {
+					result.setImageResource(R.drawable.win);
+					tempWin = PLAYER;
+					
+					dbs.setGils(dbs.getGils() + Engine.GILS_WIN);
+				}
+				else if (playerScore == opponentScore) {
+					result.setImageResource(R.drawable.draw);
+					tempWin = NOONE;
+					
+					dbs.setGils(dbs.getGils() + Engine.GILS_DRAW);
+				}
+				else {
+					result.setImageResource(R.drawable.lose);
+					tempWin = OPPONENT;
+					
+					dbs.setGils(dbs.getGils() + Engine.GILS_LOOSE);
+				}
+				dbs.close();  
+				
+				final int winner = tempWin;
+				fl.addView(result);
+				hideViewAfterAndRun(result, TIME_BEFORE_HIDING_RESULT, new Runnable() {
+					@Override
+					public void run() {
+						displayRewardScreen(winner);
+					}
+				});
 			}
-		});
+		}, TIME_BEFORE_TRIGGER_END);
 	}
 	
-	private void displayRewardScreen() {
+	private void displayRewardScreen(int winner) {
 		if (isBotVsBot) {
 			return;
 		}
@@ -447,34 +471,12 @@ public class Game extends Activity implements EventFiredListener
 		ImageView background = (ImageView) findViewById(R.id.background);
 		background.setImageResource(R.drawable.reward);
 		
-		int winner = 0;
-		if (engine.getPlayerScore() > engine.getOpponentScore())
+		if (winner == NOONE && rewardRule != RewardRule.Direct)
 		{
-			winner = PLAYER;
-			DatabaseStream dbs = new DatabaseStream(this);
-			dbs.setGils(dbs.getGils() + Engine.GILS_WIN);
-			dbs.close();
-		}
-		else if (engine.getOpponentScore() > engine.getPlayerScore())
-		{
-			winner = OPPONENT;
-			DatabaseStream dbs = new DatabaseStream(this);
-			dbs.setGils(dbs.getGils() + Engine.GILS_LOOSE);
-			dbs.close();
-		}
-		else // Draw
-		{
-			DatabaseStream dbs = new DatabaseStream(this);
-			dbs.setGils(dbs.getGils() + Engine.GILS_DRAW);
-			dbs.close();   
-			
-			if (rewardRule != RewardRule.Direct)
-			{
-				setResult(RESULT_OK);
-				finish();
-				return;
-			} 		    					
-		}
+			setResult(RESULT_OK);
+			finish();
+			return;
+		} 	
 		
 		for (Card c : playerDeck) {
 			mainLayout.removeView(c.getView());
@@ -489,79 +491,79 @@ public class Game extends Activity implements EventFiredListener
 		mainLayout.invalidate();
 		
 		if (rewardRule == RewardRule.All)
+		{
+			if (winner == PLAYER)
 			{
-				if (winner == PLAYER)
-				{
-					wonCards = new String[5];
-					loseCards = new String[0];
-					for (int c = 0; c < opponentDeck.length; c++)
-					{
-						Card card = opponentDeck[c];
-						card.swapColor();
-						wonCards[c] = card.getFullName();
-					}
-				}
-				else if (winner == OPPONENT)
-				{
-					wonCards = new String[0];
-					loseCards = new String[5];
-					for (int c = 0; c < playerDeck.length; c++)
-					{
-						Card card = playerDeck[c];
-						card.swapColor();
-						loseCards[c] = card.getFullName();
-					}
-				}
-				handler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						endReward();
-					}
-				}, TIME_BEFORE_GOING_BACK_IF_BOT_WON);
-			}
-			else if (rewardRule == RewardRule.Direct)
-			{
-				int iLose = 0;
-				loseCards = new String[5];
-				int iWon = 0;
 				wonCards = new String[5];
-				
-				for (int c = 0; c < playerDeck.length; c++)
-				{
-					Card card = playerDeck[c];
-					if (card.getColor() != card.getRewardDirectColor())
-					{
-						card.swapColor();
-						loseCards[iLose] = card.getFullName();
-						iLose++;
-					}
-				}
+				loseCards = new String[0];
 				for (int c = 0; c < opponentDeck.length; c++)
 				{
 					Card card = opponentDeck[c];
-					if (card.getColor() != card.getRewardDirectColor())
-					{
-						card.swapColor();
-						wonCards[iWon] = card.getFullName();
-						iWon++;
-					}
+					card.swapColor();
+					wonCards[c] = card.getFullName();
 				}
-				handler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						endReward();
-					}
-				}, TIME_BEFORE_GOING_BACK_IF_BOT_WON);
 			}
-			else
+			else if (winner == OPPONENT)
 			{
-				if (winner == PLAYER) {
-					isWaitingForUserToChooseACard = true;
-				}
-				else if(winner == OPPONENT && !isPvp) {
-					botChooseBetterCard();
+				wonCards = new String[0];
+				loseCards = new String[5];
+				for (int c = 0; c < playerDeck.length; c++)
+				{
+					Card card = playerDeck[c];
+					card.swapColor();
+					loseCards[c] = card.getFullName();
 				}
 			}
+			handler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					endReward();
+				}
+			}, TIME_BEFORE_GOING_BACK_IF_AUTO_REWARD);
+		}
+		else if (rewardRule == RewardRule.Direct)
+		{
+			int iLose = 0;
+			loseCards = new String[5];
+			int iWon = 0;
+			wonCards = new String[5];
+			
+			for (int c = 0; c < playerDeck.length; c++)
+			{
+				Card card = playerDeck[c];
+				if (card.getColor() != card.getRewardDirectColor())
+				{
+					card.swapColor();
+					loseCards[iLose] = card.getFullName();
+					iLose++;
+				}
+			}
+			for (int c = 0; c < opponentDeck.length; c++)
+			{
+				Card card = opponentDeck[c];
+				if (card.getColor() != card.getRewardDirectColor())
+				{
+					card.swapColor();
+					wonCards[iWon] = card.getFullName();
+					iWon++;
+				}
+			}
+			handler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					endReward();
+				}
+			}, TIME_BEFORE_GOING_BACK_IF_AUTO_REWARD);
+		}
+		else
+		{
+			if (winner == PLAYER) {
+				isWaitingForUserToChooseACard = true;
+			}
+			else if(winner == OPPONENT && !isPvp) {
+				botChooseBetterCard();
+			}
+		}
 	}
 	
 	private void oneCardRewardChoosed(final Card card)

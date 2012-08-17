@@ -33,6 +33,7 @@ import com.viish.apps.tripletriad.robots.Action;
  */
 public class Engine
 {
+	public static final int NOONE = 0;
 	public static final int PLAYER = 1;
 	public static final int OPPONENT = 2;
 	public static final int BLUE = PLAYER;
