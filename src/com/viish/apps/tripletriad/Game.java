@@ -47,7 +47,7 @@ public class Game extends Activity implements EventFiredListener
 	public static final int PLAYER = Engine.PLAYER;
 	public static final int OPPONENT = Engine.OPPONENT;
 	
-	public static final int TIME_BEFORE_OPPONENT_MOVE = 1000;
+	public static final int TIME_BEFORE_OPPONENT_MOVE = 1500;
 	public static final int TIME_BEFORE_HIDING_EVENT = 1000;
 	public static final int TIME_BEFORE_HIDING_RESULT = 3000;
 	public static final int TIME_BEFORE_GOING_BACK = 2000;
@@ -80,14 +80,27 @@ public class Game extends Activity implements EventFiredListener
         
 		initRules();
         
-        playerDeck = getRandomDeck(PLAYER);
+		if (getIntent() != null && getIntent().getExtras() != null) {
+			isPvp = getIntent().getExtras().getBoolean(getString(R.string.param_pvp));
+			isBotVsBot = getIntent().getExtras().getBoolean(getString(R.string.param_bot_vs_bot));
+		}
+		
+		if (isRegleRandom) {
+			playerDeck = getRandomDeck(PLAYER);
+		} else {
+			//TODO
+			playerDeck = getRandomDeck(PLAYER);
+		}
         opponentDeck = getRandomDeck(OPPONENT);
 		
 		engine = new Engine(Game.this, playerDeck, isPvp, false, isRegleSame, isReglePlus, isRegleSameWall, isRegleCombo, isReglePlusWall, isRegleElementary, null);
 		engine.addEventFiredListener(Game.this);
 		
 		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleSame, isReglePlus, isRegleSameWall, isRegleCombo, isReglePlusWall, isRegleElementary);
-        
+        if (isBotVsBot) {
+        	botPlayerIfDemo = new BotHard(PLAYER, OPPONENT, playerDeck, opponentDeck, engine.getBoard(), engine.getElements(), isRegleSame, isReglePlus, isRegleSameWall, isRegleCombo, isReglePlusWall, isRegleElementary);
+        }
+		
         mainLayout = (FrameLayout) findViewById(R.id.cardsLayout);
         final ViewTreeObserver viewTreeObserver = mainLayout.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
@@ -355,6 +368,10 @@ public class Game extends Activity implements EventFiredListener
 	// Assert : we are in a separated thread
 	private void playOpponentBotMove(final iBot bot)
 	{
+		if (engine.isGameOver()) {
+			return;
+		}
+		
 		Action move = bot.nextMove();
 		final Card card = move.getCard();
 		final int cell = move.getCell();
@@ -423,10 +440,7 @@ public class Game extends Activity implements EventFiredListener
 	}
 	
 	private void displayRewardScreen() {
-		if (isBotVsBot)
-		{
-			setResult(RESULT_OK);
-			finish();
+		if (isBotVsBot) {
 			return;
 		}
 		

@@ -44,11 +44,11 @@ public class MinMaxEngine {
 				applySameRule(player, card, cell, false);
 			}
 			
+			applyBasicRule(player, card, cell, false);
+			
 			if (rulePlus) {
 				applyPlusRule(player, card, cell, false);
 			}
-			
-			applyBasicRule(player, card, cell, false);
     	}
 	}
 	
@@ -229,10 +229,10 @@ public class MinMaxEngine {
 				{
 					Card card = this.board[c];
 					applySameRule(player, card, c, true);
+					applyBasicRule(player, card, c, true);
 					if (rulePlus) {
 						applyPlusRule(player, card, c, true);
 					}
-					applyBasicRule(player, card, c, true);
 				}
 			}
 		}
@@ -244,7 +244,7 @@ public class MinMaxEngine {
 		Card[] cards = new Card[4];
 		ArrayList<Integer> swapped = new ArrayList<Integer>();
 		
-		Card rulePlusWallCard = new Card("", 0, 0, "10", "10", "10", "10", "", 1, null, null, null);
+		Card rulePlusWallCard = new Card("", 0, 0, "A", "A", "A", "A", "", 1, null, null, null);
 		rulePlusWallCard.setColor(player);
 		
 		cells[0] = cell - 3;
@@ -259,8 +259,8 @@ public class MinMaxEngine {
 		
 		sums[0] = cards[0] != null ? what.getTopValue() + cards[0].getBottomValue() : -1;
 		sums[1] = cards[1] != null ? what.getBottomValue() + cards[1].getTopValue() : -1;
-		sums[2] = cards[2] != null ? what.getLeftValue() + cards[2].getRightValue() : -1;
-		sums[3] = cards[3] != null ? what.getRightValue() + cards[3].getLeftValue() : -1;
+		sums[2] = cards[2] != null ? what.getRightValue() + cards[2].getLeftValue() : -1;
+		sums[3] = cards[3] != null ? what.getLeftValue() + cards[3].getRightValue() : -1;
 		
 		for (int i = 0; i < sums.length; i++) {
 			for (int j = 0; j < sums.length; j++) {
@@ -295,8 +295,8 @@ public class MinMaxEngine {
 				if (ruleSame) {
 					applySameRule(player, card, c, true);
 				}
-				applyPlusRule(player, card, c, true);
 				applyBasicRule(player, card, c, true);
+				applyPlusRule(player, card, c, true);
 			}
 		}
 	}

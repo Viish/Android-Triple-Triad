@@ -31,6 +31,7 @@ public class Card
 	private boolean visible;
 	
 	public String top, left, bot, right;
+	private int animTempColor;
 	
 	public Card(String name, int level, int edition, String top, String left, String bot, String right, String element, int number, Bitmap blue, Bitmap red, Bitmap back)
 	{
@@ -96,14 +97,20 @@ public class Card
 	public void swapColor()
 	{
 		if (color == Engine.BLUE) {
-			color = Engine.RED;
+			animTempColor = Engine.RED;
 		} else {
-			color = Engine.BLUE;
+			animTempColor = Engine.BLUE;
 		}
 		
 		if (cardView != null) {
 			cardView.swapColor();
+		} else {
+			color = animTempColor;
 		}
+	}
+	
+	public void setAnimTempColorAsReal() {
+		color = animTempColor;
 	}
 	
 	public int getColor()

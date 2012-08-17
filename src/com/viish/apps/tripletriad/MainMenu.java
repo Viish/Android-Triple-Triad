@@ -46,6 +46,7 @@ public class MainMenu extends Activity implements OnClickListener
         
         initMenuItem((TextView) findViewById(R.id.settings));
         initMenuItem((TextView) findViewById(R.id.demo));
+        initMenuItem((TextView) findViewById(R.id.solo));
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		if (prefs.getBoolean(getString(R.string.pref_first_launch), true))
@@ -69,14 +70,20 @@ public class MainMenu extends Activity implements OnClickListener
 	@Override
 	public void onClick(View v) {
 		int id = v.getId();
+		Intent i = new Intent(this, Game.class);
+		
 		switch (id) {
 		case R.id.settings:
 			startActivity(new Intent(this, SettingsActivity.class));
 			break;
+		case R.id.solo:
+			i.putExtra(getString(R.string.param_bot_vs_bot), false);
+			i.putExtra(getString(R.string.param_pvp), false);
+			startActivity(i);
+			break;
 		case R.id.demo:
-			Intent i = new Intent(this, Game.class);
-			i.putExtra("BotVsBot", true);
-			i.putExtra("PvP", false);
+			i.putExtra(getString(R.string.param_bot_vs_bot), true);
+			i.putExtra(getString(R.string.param_pvp), false);
 			startActivity(i);
 			break;
 		}

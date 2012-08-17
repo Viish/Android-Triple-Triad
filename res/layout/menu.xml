@@ -23,14 +23,14 @@
 	    android:layout_toLeftOf="@id/logo">
         
         <TextView 
-            android:id="@+id/settings"
+            android:id="@+id/solo"
 		    android:layout_width="match_parent"
 		    android:layout_height="match_parent"
 		    android:layout_weight="1"
 		    android:gravity="center"
             android:textSize="50dp"
             android:textColor="@android:color/black"
-		    android:text="@string/menu_settings"/>
+		    android:text="@string/menu_solo"/>
         
         <TextView 
             android:id="@+id/demo"
@@ -41,6 +41,16 @@
             android:textSize="50dp"
             android:textColor="@android:color/black"
 		    android:text="@string/menu_demo"/>
+        
+        <TextView 
+            android:id="@+id/settings"
+		    android:layout_width="match_parent"
+		    android:layout_height="match_parent"
+		    android:layout_weight="1"
+		    android:gravity="center"
+            android:textSize="50dp"
+            android:textColor="@android:color/black"
+		    android:text="@string/menu_settings"/>
         
     </LinearLayout>
     

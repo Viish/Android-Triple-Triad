@@ -189,9 +189,7 @@ public class CompleteCardView extends ImageView
 	}
 	
 	private void applyRotation(float start, float end) 
-	{
-		final CompleteCardView cp = this;
-		
+	{		
 		final float centerX = posx + (card.getBlueFace().getWidth() / 2.0f);
 		final float centerY = posy + (card.getBlueFace().getHeight() / 2.0f);
 
@@ -209,7 +207,8 @@ public class CompleteCardView extends ImageView
 			}
 			public void onAnimationRepeat(Animation animation) 
 			{
-				cp.invalidate();
+				card.setAnimTempColorAsReal();
+				invalidate();
 			}
 			public void onAnimationEnd(Animation animation)
 			{
