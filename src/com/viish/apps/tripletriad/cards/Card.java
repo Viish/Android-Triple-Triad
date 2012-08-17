@@ -2,6 +2,8 @@ package com.viish.apps.tripletriad.cards;
 
 import android.graphics.Bitmap;
 
+import com.viish.apps.tripletriad.Engine;
+
 /*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
 
     This program is free software: you can redistribute it and/or modify
@@ -22,9 +24,11 @@ public class Card
 	private String name;
 	private String element;
 	private int level, edition, number;
-	private boolean locked = false, selected = false;
+	private boolean locked = false, selected = false, hasMalus = false, hasBonus = false;
 	private Bitmap redFace, blueFace, backFace;
 	private CompleteCardView cardView;
+	private int color, rewardDirectColor;
+	private boolean visible;
 	
 	public String top, left, bot, right;
 	
@@ -40,6 +44,9 @@ public class Card
 		this.element = element;
 		this.number = number;
 		
+		color = rewardDirectColor = Engine.BLUE;
+		visible = true;
+		
 		blueFace = blue;
 		redFace = red;
 		backFace = back;
@@ -47,7 +54,7 @@ public class Card
 		cardView = null;
 	}
 	
-	public CompleteCardView getCardView() {
+	public CompleteCardView getView() {
 		return cardView;
 	}
 
@@ -59,6 +66,8 @@ public class Card
 	public Card clone()
 	{
 		Card clone = new Card(name, level, edition, top, left, bot, right, element, number, blueFace, redFace, backFace);
+		clone.setColor(color);
+		clone.setRewardDirectColor(rewardDirectColor);
 		clone.setSelected(selected);
 		
 		if (locked) {
@@ -68,13 +77,52 @@ public class Card
 			clone.unlock();
 		}
 		
-		if (cardView != null) {
-			CompleteCardView clonedView = new CompleteCardView(cardView.getContext(), clone);
-			clonedView.setColor(cardView.getColor());
-			clone.setCardView(clonedView);
+		return clone;
+	}
+	
+	public void setColor(int color)
+	{
+		this.color = color;
+	}
+	
+	public void setRewardDirectColor(int color) {
+		rewardDirectColor = color;
+	}
+	
+	public int getRewardDirectColor() {
+		return rewardDirectColor;
+	}
+	
+	public void swapColor()
+	{
+		if (color == Engine.BLUE) {
+			color = Engine.RED;
+		} else {
+			color = Engine.BLUE;
 		}
 		
-		return clone;
+		if (cardView != null) {
+			cardView.swapColor();
+		}
+	}
+	
+	public int getColor()
+	{
+		return color;
+	}
+	
+	public boolean isFaceUp()
+	{
+		return visible;
+	}
+	
+	public void flipCard()
+	{
+		visible = !visible;
+		
+		if (cardView != null) {
+			cardView.invalidate();
+		}
 	}
 	
 	public int getTotal()
@@ -92,8 +140,30 @@ public class Card
 		number = n;
 	}
 	
-	public void bonusElementaire()
+	public void resetBonusMalusIfNeeded() {
+		resetBonusMalusIfNeeded(false);
+	}
+	public void resetBonusMalusIfNeeded(boolean simulating) {
+		if (hasBonus) {
+			malusElementaire(simulating);
+			hasMalus = hasBonus = false;
+		} else if (hasMalus) {
+			bonusElementaire(simulating);
+			hasMalus = hasBonus = false;
+		}
+		
+		if (cardView != null && !simulating) {
+			cardView.invalidate();
+		}
+	}
+	
+	public void bonusElementaire() {
+		bonusElementaire(false);
+	}
+	public void bonusElementaire(boolean simulating)
 	{
+		hasBonus = true;
+		
 		if (!top.equals("A"))
 		{
 			int temp = Integer.parseInt(top);
@@ -125,10 +195,19 @@ public class Card
 			if (temp == 10) { right = "A"; }
 			else { right = String.valueOf(temp); }
 		}
+		
+		if (cardView != null && !simulating) {
+			cardView.invalidate();
+		}
 	}
-	
-	public void malusElementaire()
+
+	public void malusElementaire() {
+		malusElementaire(false);
+	}
+	public void malusElementaire(boolean simulating)
 	{
+		hasMalus = true;
+		
 		if (!top.equals("A"))
 		{
 			int temp = Integer.parseInt(top);
@@ -160,6 +239,10 @@ public class Card
 			right = String.valueOf(temp);
 		}
 		else { right = "9"; }
+		
+		if (cardView != null && !simulating) {
+			cardView.invalidate();
+		}
 	}
 	
 	@Override

@@ -165,11 +165,49 @@ public class DatabaseStream
 	    return card;
 	}
 
-	public ArrayList<Card> getXRandomCards(String cond, int howMuch) // Renvoie howMuch cartes aleatoires respectant la condition cond
+	public ArrayList<Card> getXRandomCards(String cond, int howMuch)
 	{
 		ArrayList<Card> cards = new ArrayList<Card>();
 		
 		Cursor result = stream.query("Cards", null, cond, null, null, null, "Name ASC");
+		if (result != null)
+		{
+			int[] randoms = new int[howMuch];
+	    	Random random = new Random();
+	    	for (int i = 0; i < howMuch; i++)
+	    	{
+	    		boolean existeDeja = false;
+	    		int rand = random.nextInt(result.getCount() - 1) + 1;
+	    		
+	    		for (int j = 0; j < i; j++)
+	    		{
+	    			if (randoms[j] == rand) existeDeja = true;
+	    		}
+	    		
+	    		if (existeDeja) i -= 1;
+	    		else randoms[i] = rand;
+	    	}
+	    	Arrays.sort(randoms);
+    		
+    		for (int i = 0; i < howMuch; i++)
+    		{
+    			result.move(randoms[i]);
+    			Card card = getCard(result);
+				cards.add(card);
+    			result.moveToFirst();
+    		}
+    		
+    		result.close();
+		}
+		
+		return cards;
+	}
+	
+	public ArrayList<Card> getXRandomMyCards(int howMuch)
+	{
+		ArrayList<Card> cards = new ArrayList<Card>();
+		
+		Cursor result = stream.query("MyCards", null, null, null, null, null, "Name ASC");
 		if (result != null)
 		{
 			int[] randoms = new int[howMuch];

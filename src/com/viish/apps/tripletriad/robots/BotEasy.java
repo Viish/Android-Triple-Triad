@@ -193,7 +193,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where + 1];
 			if (c != null) // Si il y a une carte a sa droite
 			{
-				if (c.getCardView().getColor() != ME && what.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
 				{
 					gain += 1;
 				}
@@ -204,7 +204,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where + 1];
 			if (c != null) // Si il y a une carte a sa droite
 			{
-				if (c.getCardView().getColor() != ME && what.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getRightValue() > c.getLeftValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -213,7 +213,7 @@ public class BotEasy implements iBot
 			c = plateau[where - 1];
 			if (c != null) // Si il y a une carte a sa gauche
 			{
-				if (c.getCardView().getColor() != ME && what.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -224,7 +224,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where - 1];
 			if (c != null) // Si il y a une carte a sa gauche
 			{
-				if (c.getCardView().getColor() != ME && what.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getLeftValue() > c.getRightValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -236,7 +236,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where + 3];
 			if (c != null) // Si il y a une carte en dessous
 			{
-				if (c.getCardView().getColor() != ME && what.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -247,7 +247,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where + 3];
 			if (c != null) // Si il y a une carte en dessous
 			{
-				if (c.getCardView().getColor() != ME && what.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getBottomValue() > c.getTopValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -256,7 +256,7 @@ public class BotEasy implements iBot
 			c = plateau[where - 3];
 			if (c != null) // Si il y a une carte en dessus
 			{
-				if (c.getCardView().getColor() != ME && what.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -267,7 +267,7 @@ public class BotEasy implements iBot
 			Card c = plateau[where - 3];
 			if (c != null) // Si il y a une carte en dessus
 			{
-				if (c.getCardView().getColor() != ME && what.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
+				if (c.getColor() != ME && what.getTopValue() > c.getBottomValue()) // Celle jou�e est plus forte
 				{
 					gain += 1; // On retourne l'autre
 				}
@@ -301,7 +301,7 @@ public class BotEasy implements iBot
 			if (board[cell - 3].getBottomValue() == what.getTopValue())
 			{
 				cards.add(cell - 3);
-				if (board[cell - 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 3].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell - 3 < 0 && memeMur) // Regle MemeMur
@@ -316,7 +316,7 @@ public class BotEasy implements iBot
 			if (board[cell + 3].getTopValue() == what.getBottomValue())
 			{
 				cards.add(cell + 3);
-				if (board[cell + 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 3].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell + 3 >= board.length && memeMur) // Regle MemeMur
@@ -331,7 +331,7 @@ public class BotEasy implements iBot
 			if (board[cell + 1].getLeftValue() == what.getRightValue())
 			{
 				cards.add(cell + 1);
-				if (board[cell + 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 1].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell % 3 == 2 && memeMur) // Regle MemeMur
@@ -346,7 +346,7 @@ public class BotEasy implements iBot
 			if (board[cell - 1].getRightValue() == what.getLeftValue())
 			{
 				cards.add(cell - 1);
-				if (board[cell - 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 1].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell % 3 == 0 && memeMur) // Regle MemeMur
@@ -365,7 +365,7 @@ public class BotEasy implements iBot
 				if (c != -1)
 				{
 					Card card = board[c];
-					if (card.getCardView().getColor() != player)
+					if (card.getColor() != player)
 						swapped.add(c);
 				}
 			}
@@ -401,7 +401,7 @@ public class BotEasy implements iBot
 				else if (i == 1) somme = what.getLeftValue() + cards[i].getRightValue();
 				else if (i == 2) somme = what.getBottomValue() + cards[i].getTopValue();
 				
-				if (player != cards[i].getCardView().getColor()) condition = true;
+				if (player != cards[i].getColor()) condition = true;
 				
 				for (int j = i+1; j < 4; j++)
 				{
@@ -412,15 +412,15 @@ public class BotEasy implements iBot
 						else if (j == 1) somme2 = what.getLeftValue() + cards[j].getRightValue();
 						else if (j == 2) somme2 = what.getBottomValue() + cards[j].getTopValue();
 						
-						if (player != cards[j].getCardView().getColor()) condition = true;
+						if (player != cards[j].getColor()) condition = true;
 						
 						if (somme == somme2 && condition) // Toutes les conditions remplies
 						{
-							if (cards[i].getCardView().getColor() != player)
+							if (cards[i].getColor() != player)
 							{
 								gain.add(i);
 							}
-							if (cards[j].getCardView().getColor() != player) 
+							if (cards[j].getColor() != player) 
 							{
 								gain.add(j);
 							}

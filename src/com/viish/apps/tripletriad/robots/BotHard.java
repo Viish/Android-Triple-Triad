@@ -1,6 +1,5 @@
 package com.viish.apps.tripletriad.robots;
 
-import com.viish.apps.tripletriad.Log;
 import com.viish.apps.tripletriad.cards.Card;
 
 /*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
@@ -59,11 +58,11 @@ public class BotHard implements iBot
 			}
 		}
 		if (cardOnBoard < 3) {
-			profondeurMax = 1;
-		} else if (cardOnBoard < 5) {
 			profondeurMax = 2;
-		} else {
+		} else if (cardOnBoard < 5) {
 			profondeurMax = 3;
+		} else {
+			profondeurMax = 4;
 		}
 		
 		int gainMax = MIN;
@@ -87,6 +86,7 @@ public class BotHard implements iBot
 								caseOuJouer = slot;
 							}
 	
+							card.resetBonusMalusIfNeeded(true);
 							card.unlock();
 						}
 					}
@@ -126,7 +126,8 @@ public class BotHard implements iBot
 							if (gain < gainMin) {
 								gainMin = gain;
 							}
-	
+
+							card.resetBonusMalusIfNeeded(true);
 							card.unlock();
 						}
 					}
@@ -160,7 +161,8 @@ public class BotHard implements iBot
 							if (gain > gainMax) {
 								gainMax = gain;
 							}
-	
+
+							card.resetBonusMalusIfNeeded(true);
 							card.unlock();
 						}
 					}
@@ -175,7 +177,7 @@ public class BotHard implements iBot
 		int eval = 0;
 		for (int c = 0; c < board.length; c++) {
 			if (board[c] != null) {
-				eval += board[c].getCardView().getColor() == ME ? 1 : 0;
+				eval += board[c].getColor() == ME ? 1 : 0;
 			}
 		}
 		return eval;

@@ -1,7 +1,5 @@
 package com.viish.apps.tripletriad.cards;
 
-import com.viish.apps.tripletriad.Engine;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -14,6 +12,8 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.ImageView;
+
+import com.viish.apps.tripletriad.Engine;
 
 /*  Copyright (C) <2011-2012>  <Sylvain "Viish" Berfini>
 
@@ -39,22 +39,17 @@ public class CompleteCardView extends ImageView
 	private static final float SHADOW_RADIUS = 1.0f;
     private static final int SHADOW_OFFSET = 1;
 	
-	private boolean visible;
-	private int viewColor, trueColor, alternativeColor, taillePinceau;
+	private int taillePinceau;
 	private int posx = 0, posy = 0;
 	private Paint paint;
 	private Card card;
-    private int hasBeenModifiedByElement = 0;
 	
 	public CompleteCardView(Context context, Card card)
 	{
 		super(context);
 		
 		this.card = card;
-		visible = true;
 		setClickable(false); 
-		
-		viewColor = trueColor = Engine.BLUE;
 		
 		paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		Typeface typeface = Typeface.createFromAsset(context.getAssets(), "font.ttf");
@@ -65,69 +60,13 @@ public class CompleteCardView extends ImageView
 		paint.setTextSize(taillePinceau);
 	}
 	
-	public void resetElement()
-	{
-		if (hasBeenModifiedByElement == 1) {
-			malusElementaire();
-		}
-		else if (hasBeenModifiedByElement == -1) {
-			bonusElementaire();
-		}
-	}
-	
-	public void bonusElementaire()
-	{
-		hasBeenModifiedByElement = 1;		
-		card.bonusElementaire();
-		invalidate();
-	}
-	
-	public void malusElementaire()
-	{
-		hasBeenModifiedByElement = -1;		
-		card.malusElementaire();	
-		invalidate();
-	}
-	
-	public void setColor(int color)
-	{
-		viewColor = trueColor = color;
-	}
-	
 	public void swapColor()
 	{
-		if (viewColor == Engine.BLUE)
-		{
-			trueColor = Engine.RED;
+		if (card.getColor() == Engine.RED) {
 			applyRotation(0, 90);
-		}
-		else
-		{
-			trueColor = Engine.BLUE;
+		} else {
 			applyRotation(0, -90);
 		}
-	}
-	
-	public void setAlternativeColor(int alt)
-	{
-		alternativeColor = alt;
-	}
-	
-	public int getAlternativeColor()
-	{
-		return alternativeColor;
-	}
-	
-	public int getColor()
-	{
-		return trueColor;
-	}
-	
-	public void flipCard()
-	{
-		visible = !visible;
-		
-		invalidate();
 	}
 	
 	public void move(int x, int y)
@@ -138,20 +77,11 @@ public class CompleteCardView extends ImageView
 		invalidate();
 	}
 	
-	public boolean isFaceUp()
-	{
-		return visible;
-	}
-	
 	public Bitmap getBitmap()
 	{
-		if (viewColor == Engine.BLUE) 
-		{ 
+		if (card.getColor() == Engine.BLUE) { 
 			return card.getBlueFace(); 
-		}
-		
-		if (viewColor == Engine.RED) 
-		{ 
+		} else if (card.getColor() == Engine.RED) { 
 			return card.getRedFace(); 
 		}
 		
@@ -181,12 +111,12 @@ public class CompleteCardView extends ImageView
 	@Override
 	protected void onDraw(Canvas canvas)
 	{
-		if (visible)
+		if (card.isFaceUp())
 		{
-			if (viewColor == Engine.BLUE) {
+			if (card.getColor() == Engine.BLUE) {
 				canvas.drawBitmap(card.getBlueFace(), posx, posy, null);
 			}
-			else if (viewColor == Engine.RED) {
+			else if (card.getColor() == Engine.RED) {
 				canvas.drawBitmap(card.getRedFace(), posx, posy, null);
 			}
 			
@@ -279,7 +209,6 @@ public class CompleteCardView extends ImageView
 			}
 			public void onAnimationRepeat(Animation animation) 
 			{
-				cp.viewColor = cp.trueColor;
 				cp.invalidate();
 			}
 			public void onAnimationEnd(Animation animation)

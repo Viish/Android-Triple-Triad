@@ -79,13 +79,17 @@ public class Game extends Activity implements EventFiredListener
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.game);
         
-        initRules();
+		initRules();
         
         playerDeck = getRandomDeck(PLAYER);
         opponentDeck = getRandomDeck(OPPONENT);
+		
+		engine = new Engine(Game.this, playerDeck, isPvp, false, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, null);
+		engine.addEventFiredListener(Game.this);
+		
+		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
         
         mainLayout = (FrameLayout) findViewById(R.id.cardsLayout);
-        
         final ViewTreeObserver viewTreeObserver = mainLayout.getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
         	viewTreeObserver.addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
@@ -96,11 +100,6 @@ public class Game extends Activity implements EventFiredListener
 	            }
         	});
         }
-        
-		engine = new Engine(this, playerDeck, isPvp, false, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, null);
-		engine.addEventFiredListener(this);
-		
-		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
     }
 	
 	private void initRules()
@@ -143,16 +142,35 @@ public class Game extends Activity implements EventFiredListener
         startGame();
 	}
 	
-	private void startGame() {		
+	private void startGame() {	
+		engine.startGame();
 		int startingPlayer = engine.getStartingPlayer();
 		
 		if (!isPvp)
 		{
 			if (startingPlayer == OPPONENT) {
-				playOpponentBotMove(botOpponent);
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(TIME_BEFORE_OPPONENT_MOVE);
+						} catch (InterruptedException e) {}
+						
+						playOpponentBotMove(botOpponent);
+					}
+				}).start();
 			}
 			else if (startingPlayer == PLAYER && isBotVsBot) {
-				playOpponentBotMove(botPlayerIfDemo);
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(TIME_BEFORE_OPPONENT_MOVE);
+						} catch (InterruptedException e) {}
+
+						playOpponentBotMove(botPlayerIfDemo);
+					}
+				}).start();
 			}
 		}
 	}
@@ -164,39 +182,17 @@ public class Game extends Activity implements EventFiredListener
 		Card[] deck = new Card[howMuch];
 		
 		DatabaseStream dbs = new DatabaseStream(this);
-		ArrayList<Card> cardsAvailable;
+		ArrayList<Card> cards;
 		if (player == PLAYER) {
-			cardsAvailable = dbs.getMyCards();
+			cards = dbs.getXRandomCards(null, howMuch); //FIXME getXRandomMyCards;
 		} else {
-			cardsAvailable = dbs.getAllCards();
+			cards = dbs.getXRandomCards(null, howMuch);
 		}
 		dbs.close();
-		
-		int[] randoms = new int[howMuch];
-		Random random = new Random();
-    	for (int i = 0; i < howMuch; i++)
-    	{
-    		boolean alreadyInDeck = false;
-    		int rand = random.nextInt(cardsAvailable.size() - 1) + 1;
-    		
-    		for (int j = 0; j < i; j++)
-    		{
-    			if (randoms[j] == rand) {
-    				alreadyInDeck = true;
-    			}
-    		}
-    		
-    		if (alreadyInDeck) {
-    			i -= 1;
-    		}
-    		else { 
-    			randoms[i] = rand;
-    		}
-    	}
-    	
-		for (int c = 0; c < howMuch; c++)
+
+		for (int c = 0; c < cards.size(); c++)
 		{
-			deck[c] = cardsAvailable.get(randoms[c]);			
+			deck[c] = cards.get(c);			
 		}
 		
 		return deck;
@@ -210,7 +206,7 @@ public class Game extends Activity implements EventFiredListener
     	{
     		CompleteCardView cardView = new CompleteCardView(this, deck[i]);
     		deck[i].setCardView(cardView);
-    		cardView.setColor(player);
+    		deck[i].setColor(player);
     		cardView.resizePictures(layoutWidth / 2 / 3, layoutHeight / 4);
     		
     		if (player == OPPONENT)
@@ -218,7 +214,7 @@ public class Game extends Activity implements EventFiredListener
 	    		cardView.move(7 * layoutWidth / 8 - cardView.getBitmap().getWidth() / 2, i * (layoutHeight / 6) + ((layoutHeight - ((layoutHeight / 6) * 5)) / 6));
 	        	fl.addView(cardView);
 	        	if (!isRegleOpen) {
-	        		cardView.flipCard();
+	        		deck[i].flipCard();
 	        	}
     		}
     		else if (player == PLAYER)
@@ -235,12 +231,16 @@ public class Game extends Activity implements EventFiredListener
 	
 	public boolean onTouchEvent(MotionEvent event)
 	{
+		if (engine == null || !engine.isGameStarted()) {
+			return false;
+		}
+		
 		if (engine.isGameOver() && isWaitingForUserToChooseACard)
 		{
 			Card chosenCard = null;
 			for (Card card : opponentDeck)
 	    	{
-	    		CompleteCardView cardView = card.getCardView();
+	    		CompleteCardView cardView = card.getView();
 	    		if (event.getX() >= cardView.getPositionX() && event.getX() <= cardView.getPositionX() + cardView.getRealWidth())
 	    		{
 	    			if (event.getY() >= cardView.getPositionY() && event.getY() <= cardView.getPositionY() + cardView.getRealHeight())
@@ -252,7 +252,7 @@ public class Game extends Activity implements EventFiredListener
 	    	}
 			
 			if (chosenCard != null) {
-				chosenCard.getCardView().swapColor();
+				chosenCard.swapColor();
 				isWaitingForUserToChooseACard = false;
 				oneCardRewardChoosed(chosenCard);
 				return true;
@@ -265,7 +265,7 @@ public class Game extends Activity implements EventFiredListener
 	    	{
 	    		for (Card card : playerDeck)
 		    	{
-		    		CompleteCardView cardView = card.getCardView();
+		    		CompleteCardView cardView = card.getView();
 		    		if (event.getX() >= cardView.getPositionX() && event.getX() <= cardView.getPositionX() + cardView.getRealWidth())
 		    		{
 		    			if (event.getY() >= cardView.getPositionY() && event.getY() <= cardView.getPositionY() + cardView.getRealHeight())
@@ -347,11 +347,12 @@ public class Game extends Activity implements EventFiredListener
 		int screenX = (layoutWidth / 4) + (y * (fieldWidth / 3));
     	int screenY = x * (fieldHeight / 3);
     	
-    	card.getCardView().resizePictures(fieldWidth / 3, fieldHeight / 3);
+    	card.getView().resizePictures(fieldWidth / 3, fieldHeight / 3);
     	card.setSelected(false);
-    	card.getCardView().move(screenX, screenY);
+    	card.getView().move(screenX, screenY);
 	}
 	
+	// Assert : we are in a separated thread
 	private void playOpponentBotMove(final iBot bot)
 	{
 		Action move = bot.nextMove();
@@ -362,8 +363,8 @@ public class Game extends Activity implements EventFiredListener
 		handler.post(new Runnable() {
 			@Override
 			public void run() {
-				if (!card.getCardView().isFaceUp()) { 
-					card.getCardView().flipCard();
+				if (!card.isFaceUp()) { 
+					card.flipCard();
 				}
 				
 				int boardX = cell / 3;
@@ -386,6 +387,11 @@ public class Game extends Activity implements EventFiredListener
 			else {
 				botToPlay = botOpponent;
 			}
+			
+			try {
+				Thread.sleep(TIME_BEFORE_OPPONENT_MOVE);
+			} catch (InterruptedException e) {}
+			
 			playOpponentBotMove(botToPlay);
 		}
 	}
@@ -457,10 +463,10 @@ public class Game extends Activity implements EventFiredListener
 		}
 		
 		for (Card c : playerDeck) {
-			mainLayout.removeView(c.getCardView());
+			mainLayout.removeView(c.getView());
 		}
 		for (Card c : opponentDeck) {
-			mainLayout.removeView(c.getCardView());
+			mainLayout.removeView(c.getView());
 		}
 		
 		displayDeckForReward(PLAYER, playerDeck);
@@ -477,7 +483,7 @@ public class Game extends Activity implements EventFiredListener
 					for (int c = 0; c < opponentDeck.length; c++)
 					{
 						Card card = opponentDeck[c];
-						card.getCardView().swapColor();
+						card.swapColor();
 						wonCards[c] = card.getFullName();
 					}
 				}
@@ -488,7 +494,7 @@ public class Game extends Activity implements EventFiredListener
 					for (int c = 0; c < playerDeck.length; c++)
 					{
 						Card card = playerDeck[c];
-						card.getCardView().swapColor();
+						card.swapColor();
 						loseCards[c] = card.getFullName();
 					}
 				}
@@ -509,9 +515,9 @@ public class Game extends Activity implements EventFiredListener
 				for (int c = 0; c < playerDeck.length; c++)
 				{
 					Card card = playerDeck[c];
-					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
+					if (card.getColor() != card.getRewardDirectColor())
 					{
-						card.getCardView().swapColor();
+						card.swapColor();
 						loseCards[iLose] = card.getFullName();
 						iLose++;
 					}
@@ -519,9 +525,9 @@ public class Game extends Activity implements EventFiredListener
 				for (int c = 0; c < opponentDeck.length; c++)
 				{
 					Card card = opponentDeck[c];
-					if (card.getCardView().getColor() != card.getCardView().getAlternativeColor())
+					if (card.getColor() != card.getRewardDirectColor())
 					{
-						card.getCardView().swapColor();
+						card.swapColor();
 						wonCards[iWon] = card.getFullName();
 						iWon++;
 					}
@@ -572,7 +578,7 @@ public class Game extends Activity implements EventFiredListener
 			}
 		}
 		loseCards[0] = loseC.getFullName();
-		loseC.getCardView().swapColor();
+		loseC.swapColor();
 
 		handler.postDelayed(new Runnable() {
 			@Override
@@ -612,17 +618,20 @@ public class Game extends Activity implements EventFiredListener
 	private void displayDeckForReward(int player, Card[] deck) {
 		for (int i = 0; i < deck.length; i++)
     	{
-    		CompleteCardView cardView = deck[i].getCardView();
-    		cardView.resetElement();
+			Card card = deck[i];
+    		CompleteCardView cardView = card.getView();
+    		card.resetBonusMalusIfNeeded();
 			mainLayout.addView(cardView);
     		cardView.resizePictures(fieldWidth / 3, fieldHeight / 3);
     		
     		if (rewardRule == RewardRule.Direct) {
-    			cardView.setAlternativeColor(cardView.getColor());
+    			card.setRewardDirectColor(card.getColor());
     		}
-			cardView.setColor(player);
-			if (!cardView.isFaceUp())
-				cardView.flipCard();
+    		
+    		card.setColor(player);
+			if (!card.isFaceUp()) {
+				card.flipCard();
+			}
 
 			int marge = ((layoutWidth / 5) - cardView.getRealWidth()) / 2;
     		if (player == PLAYER)
@@ -643,7 +652,7 @@ public class Game extends Activity implements EventFiredListener
 	
 	private void selectCard(Card card)
 	{
-		card.getCardView().move(card.getCardView().getPositionX() + card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+		card.getView().move(card.getView().getPositionX() + card.getView().getRealWidth() / 3, card.getView().getPositionY());
 		card.setSelected(true);
 	}
 	
@@ -654,7 +663,7 @@ public class Game extends Activity implements EventFiredListener
 			for (Card card : playerDeck)
 			{
 				if (card.isSelected()) {
-					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+					card.getView().move(card.getView().getPositionX() - card.getView().getRealWidth() / 3, card.getView().getPositionY());
 				}
 				card.setSelected(false);
 			}
@@ -664,7 +673,7 @@ public class Game extends Activity implements EventFiredListener
 			for (Card card : opponentDeck)
 			{
 				if (card.isSelected()) {
-					card.getCardView().move(card.getCardView().getPositionX() - card.getCardView().getRealWidth() / 3, card.getCardView().getPositionY());
+					card.getView().move(card.getView().getPositionX() - card.getView().getRealWidth() / 3, card.getView().getPositionY());
 				}
 				card.setSelected(false);
 			}
@@ -780,7 +789,7 @@ public class Game extends Activity implements EventFiredListener
 		handler.post(new Runnable() {
 			@Override
 			public void run() {
-				card.getCardView().swapColor();
+				card.swapColor();
 				
 				loseCards = new String[1];
 				loseCards[0] = card.getFullName();

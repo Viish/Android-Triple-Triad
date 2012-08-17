@@ -19,3 +19,5 @@ local.properties
 res/drawable*
 assets/*
 ic_launcher-web.png
+
+Keystore

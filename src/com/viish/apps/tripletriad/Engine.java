@@ -96,9 +96,6 @@ public class Engine
 				pvpConnection.addNetworkListener(this);
 				new Thread(pvpConnection).start();
 			}
-			else {
-				gameStarted = true;
-			}
 			
 			currentPlayer = firstToPlay;
 			startingPlayer = firstToPlay;
@@ -112,9 +109,10 @@ public class Engine
 			pvpConnection.addNetworkListener(this);
 			new Thread(pvpConnection).start();
 		}
-		else {
-			gameStarted = true;
-		}
+	}
+	
+	public void startGame() {
+		gameStarted = true;
 	}
 	
 	private int getPort()
@@ -411,7 +409,7 @@ public class Engine
 		int player = 0;
 		for (Card c : board)
 		{
-			if (c != null && c.getCardView().getColor() == PLAYER)
+			if (c != null && c.getColor() == PLAYER)
 				player++;
 		}
 		
@@ -426,7 +424,7 @@ public class Engine
 		int opponent = 0;
 		for (Card c : board)
 		{
-			if (c != null && c.getCardView().getColor() == OPPONENT) {
+			if (c != null && c.getColor() == OPPONENT) {
 				opponent++;
 			}
 		}
@@ -541,9 +539,9 @@ public class Engine
 			Card c = board[cell + 1];
 			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue())
+				if (c.getColor() != player && card.getRightValue() > c.getLeftValue())
 				{
-					c.getCardView().swapColor();
+					c.swapColor();
 					swapped++;
 				}
 			}
@@ -553,9 +551,9 @@ public class Engine
 			Card c = board[cell + 1];
 			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getRightValue() > c.getLeftValue()) 
+				if (c.getColor() != player && card.getRightValue() > c.getLeftValue()) 
 				{
-					c.getCardView().swapColor();
+					c.swapColor();
 					swapped++;
 				}
 			}
@@ -563,9 +561,9 @@ public class Engine
 			c = board[cell - 1];
 			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue())
+				if (c.getColor() != player && card.getLeftValue() > c.getRightValue())
 				{
-					c.getCardView().swapColor(); 
+					c.swapColor(); 
 					swapped++;
 				}
 			}
@@ -575,9 +573,9 @@ public class Engine
 			Card c = board[cell - 1];
 			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getLeftValue() > c.getRightValue()) 
+				if (c.getColor() != player && card.getLeftValue() > c.getRightValue()) 
 				{
-					c.getCardView().swapColor(); 
+					c.swapColor(); 
 					swapped++;
 				}
 			}
@@ -588,9 +586,9 @@ public class Engine
 			Card c = board[cell + 3];
 			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) 
+				if (c.getColor() != player && card.getBottomValue() > c.getTopValue()) 
 				{
-					c.getCardView().swapColor();
+					c.swapColor();
 					swapped++;
 				}
 			}
@@ -600,9 +598,9 @@ public class Engine
 			Card c = board[cell + 3];
 			if (c != null)
 			{
-				if (c.getCardView().getColor() != player && card.getBottomValue() > c.getTopValue()) 
+				if (c.getColor() != player && card.getBottomValue() > c.getTopValue()) 
 				{
-					c.getCardView().swapColor();
+					c.swapColor();
 					swapped++;
 				}
 			}
@@ -610,9 +608,9 @@ public class Engine
 			c = board[cell - 3];
 			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue())
+				if (c.getColor() != player && card.getTopValue() > c.getBottomValue())
 				{
-					c.getCardView().swapColor(); 
+					c.swapColor(); 
 					swapped++;
 				}
 			}
@@ -622,9 +620,9 @@ public class Engine
 			Card c = board[cell - 3];
 			if (c != null) 
 			{
-				if (c.getCardView().getColor() != player && card.getTopValue() > c.getBottomValue())
+				if (c.getColor() != player && card.getTopValue() > c.getBottomValue())
 				{
-					c.getCardView().swapColor();
+					c.swapColor();
 					swapped++;
 				}
 			}
@@ -646,7 +644,7 @@ public class Engine
 			if (board[cell - 3].getBottomValue() == what.getTopValue())
 			{
 				cards.add(cell - 3);
-				if (board[cell - 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 3].getColor() != player) carteAdverse += 1;
 			}
 		}
 		{
@@ -661,7 +659,7 @@ public class Engine
 			if (board[cell + 3].getTopValue() == what.getBottomValue())
 			{
 				cards.add(cell + 3);
-				if (board[cell + 3].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 3].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell + 3 >= this.board.length && regleMemeMur)
@@ -677,7 +675,7 @@ public class Engine
 			if (board[cell + 1].getLeftValue() == what.getRightValue())
 			{
 				cards.add(cell + 1);
-				if (board[cell + 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell + 1].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell % 3 == 2 && regleMemeMur)
@@ -693,7 +691,7 @@ public class Engine
 			if (board[cell - 1].getRightValue() == what.getLeftValue())
 			{
 				cards.add(cell - 1);
-				if (board[cell - 1].getCardView().getColor() != player) carteAdverse += 1;
+				if (board[cell - 1].getColor() != player) carteAdverse += 1;
 			}
 		}
 		else if (cell % 3 == 0 && regleMemeMur)
@@ -713,9 +711,9 @@ public class Engine
 				if (c != -1)
 				{
 					Card card = board[c];
-					if (card.getCardView().getColor() != player)
+					if (card.getColor() != player)
 					{
-						card.getCardView().swapColor();
+						card.swapColor();
 						swapped.add(c);
 					}
 				}
@@ -795,7 +793,7 @@ public class Engine
 					somme = what.getBottomValue() + cards[i].getTopValue();
 				}
 				
-				if (player != cards[i].getCardView().getColor()) condition = true;
+				if (player != cards[i].getColor()) condition = true;
 				
 				for (int j = i+1; j < 4; j++)
 				{
@@ -812,18 +810,18 @@ public class Engine
 							somme2 = what.getBottomValue() + cards[j].getTopValue();
 						}
 						
-						if (player != cards[j].getCardView().getColor()) condition = true;
+						if (player != cards[j].getColor()) condition = true;
 						
 						if (somme == somme2 && condition)
 						{
-							if (cards[i].getCardView().getColor() != player)
+							if (cards[i].getColor() != player)
 							{
-								cards[i].getCardView().swapColor();
+								cards[i].swapColor();
 								swapped.add(i);
 							}
-							if (cards[j].getCardView().getColor() != player) 
+							if (cards[j].getColor() != player) 
 							{
-								cards[j].getCardView().swapColor();
+								cards[j].swapColor();
 								swapped.add(j);
 							}
 						}
