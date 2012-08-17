@@ -26,9 +26,9 @@ public class BotHard implements iBot
 	private int profondeurMax;
 	private Card[] myDeck, hisDeck, board;
 	private String[] elements;
-	private boolean elementaire, identique, plus, memeMur, combo;
+	private boolean elementary, same, plus, sameWall, combo, plusWall;
 	
-	public BotHard(int me, int him, Card[] myDeck, Card[] hisDeck, Card[] board, String[] elements, boolean identique, boolean plus, boolean memeMur, boolean combo, boolean elementaire)
+	public BotHard(int me, int him, Card[] myDeck, Card[] hisDeck, Card[] board, String[] elements, boolean same, boolean plus, boolean sameWall, boolean combo, boolean plusWall, boolean elementary)
 	{	
 		ME = me;
 		HIM = him;
@@ -38,12 +38,12 @@ public class BotHard implements iBot
 		this.hisDeck = hisDeck;
 		this.board = board;
 		this.elements = elements;
-		this.identique = identique;
+		this.same = same;
 		this.plus = plus;
-		this.memeMur = memeMur;
+		this.sameWall = sameWall;
 		this.combo = combo;
-		
-		this.elementaire = elementaire;
+		this.plusWall = plusWall;
+		this.elementary = elementary;
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class BotHard implements iBot
 	}
 	
 	private void simulate(int player, Card card, int slot, Card[] board) {
-		MinMaxEngine engine = new MinMaxEngine(board, elements, identique, plus, memeMur, combo, elementaire);
+		MinMaxEngine engine = new MinMaxEngine(board, elements, same, plus, sameWall, combo, plusWall, elementary);
 		engine.playCard(player, card, slot);
 	}
 	

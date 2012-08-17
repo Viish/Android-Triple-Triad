@@ -30,7 +30,9 @@
     <string name="pref_rule_combo">Combo</string>
     <string name="pref_rule_combo_summ">Enable/disable \'Combo\' rule.</string>
     <string name="pref_rule_same_wall">Same Wall</string>
-    <string name="pref_rule_same_wall_summ">Enable/disable \'Same Wall\' rule.</string>
+    <string name="pref_rule_same_wall_summ">Enable/disable \'Same Wall\' rule. Useless if \'Same\' rule is not checked</string>
+    <string name="pref_rule_plus_wall">Plus Wall</string>
+    <string name="pref_rule_plus_wall_summ">Enable/disable \'Plus Wall\' rule. Useless if \'Plus\' rule is not checked.</string>
     <string name="pref_rule_element">Elementary</string>
     <string name="pref_rule_element_summ">Enable/disable \'Elementary\' rule.</string>
     <string name="pref_rule_open">Open</string>
@@ -42,6 +44,7 @@
     <string name="port">Server is listening on port</string>
     
     <string name="event_same_wall">Same Wall !</string>
+    <string name="event_plus_wall">Plus Wall !</string>
     <string name="event_same">Same !</string>
     <string name="event_plus">Plus !</string>
     <string name="event_combo">Combo !</string>

@@ -2,7 +2,6 @@ package com.viish.apps.tripletriad;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -68,7 +67,7 @@ public class Game extends Activity implements EventFiredListener
 	
 	private boolean isPvp = false;
 	private boolean isBotVsBot = false;
-	private boolean isRegleRandom, isRegleOpen, isRegleIdentique, isReglePlus, isRegleCombo, isRegleMemeMur, isRegleElementaire ;
+	private boolean isRegleRandom, isRegleOpen, isRegleSame, isReglePlus, isRegleCombo, isRegleSameWall, isRegleElementary, isReglePlusWall;
 	private RewardRule rewardRule;
 	private boolean isWaitingForUserToChooseACard;
 	
@@ -84,10 +83,10 @@ public class Game extends Activity implements EventFiredListener
         playerDeck = getRandomDeck(PLAYER);
         opponentDeck = getRandomDeck(OPPONENT);
 		
-		engine = new Engine(Game.this, playerDeck, isPvp, false, isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire, null);
+		engine = new Engine(Game.this, playerDeck, isPvp, false, isRegleSame, isReglePlus, isRegleSameWall, isRegleCombo, isReglePlusWall, isRegleElementary, null);
 		engine.addEventFiredListener(Game.this);
 		
-		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleIdentique, isReglePlus, isRegleMemeMur, isRegleCombo, isRegleElementaire);
+		botOpponent = new BotHard(OPPONENT, PLAYER, opponentDeck, playerDeck, engine.getBoard(), engine.getElements(), isRegleSame, isReglePlus, isRegleSameWall, isRegleCombo, isReglePlusWall, isRegleElementary);
         
         mainLayout = (FrameLayout) findViewById(R.id.cardsLayout);
         final ViewTreeObserver viewTreeObserver = mainLayout.getViewTreeObserver();
@@ -108,11 +107,12 @@ public class Game extends Activity implements EventFiredListener
 		
 		isRegleRandom = prefs.getBoolean(getString(R.string.pref_rule_random_key), false);
 		isRegleOpen = prefs.getBoolean(getString(R.string.pref_rule_open_key), false);
-		isRegleIdentique = prefs.getBoolean(getString(R.string.pref_rule_same_key), false);
+		isRegleSame = prefs.getBoolean(getString(R.string.pref_rule_same_key), false);
 		isReglePlus = prefs.getBoolean(getString(R.string.pref_rule_plus_key), false);
 		isRegleCombo = prefs.getBoolean(getString(R.string.pref_rule_combo_key), false);
-		isRegleMemeMur = prefs.getBoolean(getString(R.string.pref_rule_same_wall_key), false);
-		isRegleElementaire = prefs.getBoolean(getString(R.string.pref_rule_element_key), false);
+		isRegleSameWall = prefs.getBoolean(getString(R.string.pref_rule_same_wall_key), false);
+		isReglePlusWall = prefs.getBoolean(getString(R.string.pref_rule_plus_wall_key), false);
+		isRegleElementary = prefs.getBoolean(getString(R.string.pref_rule_element_key), false);
 		
 		String reward = prefs.getString(getString(R.string.pref_rule_reward_key), "One");
 		if (reward.equals("Direct")) {
@@ -135,7 +135,7 @@ public class Game extends Activity implements EventFiredListener
         showDeck(PLAYER, playerDeck);
         showDeck(OPPONENT, opponentDeck);
         
-        if (isRegleElementaire) {
+        if (isRegleElementary) {
 			drawElements();
 		}
         	
@@ -760,6 +760,11 @@ public class Game extends Activity implements EventFiredListener
 	@Override
 	public void eventSameTriggered() {
 		displayEvent(R.drawable.same, R.string.event_same);
+	}
+
+	@Override
+	public void eventPlusWallTriggered() {
+		displayEvent(R.drawable.pluswall, R.string.event_plus_wall);
 	}
 
 	@Override

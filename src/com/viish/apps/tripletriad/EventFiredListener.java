@@ -23,6 +23,7 @@ import com.viish.apps.tripletriad.robots.Action;
 public interface EventFiredListener extends EventListener
 {
 	void eventSameWallTriggered();
+	void eventPlusWallTriggered();
 	void eventSameTriggered();
 	void eventPlusTriggered();
 	void eventComboTriggered();

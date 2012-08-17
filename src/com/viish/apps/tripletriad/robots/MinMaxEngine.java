@@ -8,9 +8,9 @@ public class MinMaxEngine {
 	private Card[] board;
 	private String[] elements;
 	private int cardOnBoard;
-	private boolean regleIdentique, reglePlus, regleMemeMur, regleCombo, regleElementaire;
+	private boolean ruleSame, rulePlus, ruleSameWall, ruleCombo, ruleElementary, rulePlusWall;
 	
-	public MinMaxEngine(Card[] b, String[] e, boolean identique, boolean plus, boolean mememur, boolean combo, boolean elementaire) {
+	public MinMaxEngine(Card[] b, String[] e, boolean identique, boolean plus, boolean mememur, boolean combo, boolean plusWall, boolean elementaire) {
 		board = b;
 		elements = e;
 		
@@ -21,11 +21,12 @@ public class MinMaxEngine {
 			}
 		}
 		
-		regleIdentique = identique;
-		reglePlus = plus;
-		regleMemeMur = mememur;
-		regleCombo = combo;
-		regleElementaire = elementaire;
+		ruleSame = identique;
+		rulePlus = plus;
+		ruleSameWall = mememur;
+		ruleCombo = combo;
+		ruleElementary = elementaire;
+		rulePlusWall = plusWall;
 	}
 	
 	public void playCard(int player, Card card, int cell)
@@ -33,17 +34,17 @@ public class MinMaxEngine {
 		board[cell] = card;
 		cardOnBoard += 1;
     	
-		if (regleElementaire) {
+		if (ruleElementary) {
 			applyElementaireRule(card, cell);
 		}
 		
     	if (cardOnBoard > 1)
     	{
-			if (regleIdentique) {
+			if (ruleSame) {
 				applySameRule(player, card, cell, false);
 			}
 			
-			if (reglePlus) {
+			if (rulePlus) {
 				applyPlusRule(player, card, cell, false);
 			}
 			
@@ -153,7 +154,7 @@ public class MinMaxEngine {
 				if (this.board[cell - 3].getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell - 3 < 0 && regleMemeMur)
+		else if (cell - 3 < 0 && ruleSameWall)
 		{
 			if (10 == what.getTopValue())
 			{
@@ -168,7 +169,7 @@ public class MinMaxEngine {
 				if (this.board[cell + 3].getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell + 3 >= this.board.length && regleMemeMur)
+		else if (cell + 3 >= this.board.length && ruleSameWall)
 		{
 			if (10 == what.getBottomValue())
 			{
@@ -183,7 +184,7 @@ public class MinMaxEngine {
 				if (this.board[cell + 1].getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell % 3 == 2 && regleMemeMur)
+		else if (cell % 3 == 2 && ruleSameWall)
 		{
 			if (10 == what.getRightValue())
 			{
@@ -198,7 +199,7 @@ public class MinMaxEngine {
 				if (this.board[cell - 1].getColor() != player) carteAdverse += 1;
 			}
 		}
-		else if (cell % 3 == 0 && regleMemeMur)
+		else if (cell % 3 == 0 && ruleSameWall)
 		{
 			if (10 == what.getLeftValue())
 			{
@@ -222,13 +223,13 @@ public class MinMaxEngine {
 				}
 			}
 			
-			if (regleCombo)
+			if (ruleCombo)
 			{
 				for (int c : swapped) 
 				{
 					Card card = this.board[c];
 					applySameRule(player, card, c, true);
-					if (reglePlus) {
+					if (rulePlus) {
 						applyPlusRule(player, card, c, true);
 					}
 					applyBasicRule(player, card, c, true);
@@ -237,69 +238,61 @@ public class MinMaxEngine {
 		}
 	}
 	
-	private void applyPlusRule(int player, Card what, int cell, boolean combo)
-	{
+	private void applyPlusRule(int player, Card what, int cell, boolean combo) {
+		int[] sums = new int[4];
+		int[] cells = new int[4];
 		Card[] cards = new Card[4];
-		int[] numeros = new int[4];
 		ArrayList<Integer> swapped = new ArrayList<Integer>();
 		
-		numeros[0] = cell - 3;
-		numeros[1] = cell - 1;
-		numeros[2] = cell + 3;
-		numeros[3] = cell + 1;
-		if (cell - 3 >= 0) cards[0] = this.board[cell - 3];
-		if (cell + 3 < this.board.length) cards[2] = this.board[cell + 3];
-		if (cell % 3 <= 1) cards[3] = this.board[cell + 1];
-		if (cell % 3 >= 1) cards[1] = this.board[cell - 1];
+		Card rulePlusWallCard = new Card("", 0, 0, "10", "10", "10", "10", "", 1, null, null, null);
+		rulePlusWallCard.setColor(player);
 		
-		for (int i = 0; i < 3; i ++)
-		{ 
-			boolean condition = false;
-			if (cards[i] != null)
-			{
-				int somme = 0;
-				if (i == 0) somme = what.getTopValue() + cards[i].getBottomValue();
-				else if (i == 1) somme = what.getLeftValue() + cards[i].getRightValue();
-				else if (i == 2) somme = what.getBottomValue() + cards[i].getTopValue();
-				
-				if (player != cards[i].getColor()) condition = true;
-				
-				for (int j = i+1; j < 4; j++)
-				{
-					if (cards[j] != null)
-					{
-						int somme2 = 0;
-						if (j == 3) somme2 = what.getRightValue() + cards[j].getLeftValue();
-						else if (j == 1) somme2 = what.getLeftValue() + cards[j].getRightValue();
-						else if (j == 2) somme2 = what.getBottomValue() + cards[j].getTopValue();
-						
-						if (player != cards[j].getColor()) condition = true;
-						
-						if (somme == somme2 && condition)
+		cells[0] = cell - 3;
+		cells[1] = cell + 3;
+		cells[2] = cell + 1;
+		cells[3] = cell - 1;
+		
+		cards[0] = cell - 3 >= 0 ? board[cells[0]] : (rulePlusWall ? rulePlusWallCard : null);
+		cards[1] = cell + 3 < board.length ? board[cells[1]] : (rulePlusWall ? rulePlusWallCard : null);
+		cards[2] = cell % 3 <= 1 ? board[cells[2]] : (rulePlusWall ? rulePlusWallCard : null);
+		cards[3] = cell % 3 >= 1 ? board[cells[3]] : (rulePlusWall ? rulePlusWallCard : null);
+		
+		sums[0] = cards[0] != null ? what.getTopValue() + cards[0].getBottomValue() : -1;
+		sums[1] = cards[1] != null ? what.getBottomValue() + cards[1].getTopValue() : -1;
+		sums[2] = cards[2] != null ? what.getLeftValue() + cards[2].getRightValue() : -1;
+		sums[3] = cards[3] != null ? what.getRightValue() + cards[3].getLeftValue() : -1;
+		
+		for (int i = 0; i < sums.length; i++) {
+			for (int j = 0; j < sums.length; j++) {
+				if (i != j && sums[i] == sums[j] && sums[i] != -1) {
+					// We need at least an opponent card to trigger plus rule
+					boolean atLeastOneOpponentCardCondition = false;
+					atLeastOneOpponentCardCondition |= (cards[i] != null && cards[i].getColor() != player);
+					atLeastOneOpponentCardCondition |= (cards[j] != null && cards[j].getColor() != player);
+					
+					if (atLeastOneOpponentCardCondition) {
+						if (cards[i] != null && cards[i].getColor() != player)
 						{
-							if (cards[i].getColor() != player)
-							{
-								cards[i].swapColor();
-								swapped.add(i);
-							}
-							if (cards[j].getColor() != player) 
-							{
-								cards[j].swapColor();
-								swapped.add(j);
-							}
+							cards[i].swapColor();
+							swapped.add(i);
+						}
+						if (cards[j] != null && cards[j].getColor() != player) 
+						{
+							cards[j].swapColor();
+							swapped.add(j);
 						}
 					}
 				}
 			}
 		}
 		
-		if (regleCombo)
+		if (ruleCombo)
 		{
 			for (int i : swapped)
 			{
-				int c = numeros[i];
+				int c = cells[i];
 				Card card = cards[i];
-				if (regleIdentique) {
+				if (ruleSame) {
 					applySameRule(player, card, c, true);
 				}
 				applyPlusRule(player, card, c, true);
