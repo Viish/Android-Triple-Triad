@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Typeface;
@@ -79,6 +80,11 @@ public class MinimalistCardView extends ImageView
 		return card.getEdition();
 	}
 	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		setMeasuredDimension(card.getBlueFace().getWidth(), card.getBlueFace().getHeight());
+	}
+	
 	private void initPaint()
 	{
 		paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -116,6 +122,30 @@ public class MinimalistCardView extends ImageView
 	{
 		card = c;
 		invalidate();
+	}
+	
+	public void resizePictures(int x, int y)
+	{
+		card.setBlueFace(resize(card.getBlueFace(), x, y));		
+		taillePinceau = y / 5;
+		paint.setTextSize(taillePinceau);
+		invalidate();
+	}
+	
+	private Bitmap resize(Bitmap bm, int x, int y)
+	{
+		int width = bm.getWidth();
+		int height = bm.getHeight();
+		int newWidth = x;
+		int newHeight = y;
+		float scaleWidth = ((float) newWidth) / width;
+		float scaleHeight = ((float) newHeight) / height;
+		
+		Matrix matrix = new Matrix();
+		matrix.postScale(scaleWidth, scaleHeight);
+		Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
+
+		return resizedBitmap;
 	}
 	
 	@Override

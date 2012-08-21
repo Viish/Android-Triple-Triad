@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/reward"
+    android:orientation="vertical" >
+
+    <TabHost
+        android:id="@+id/tabhost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+            </TabWidget>
+
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <LinearLayout
+                    android:id="@+id/tabMyCards"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+				    
+                    <TextView 
+                        android:id="@+id/levelMyCards"
+                        android:gravity="center"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                   
+				    <android.support.v4.view.ViewPager
+				        android:id="@+id/cards"
+				        android:layout_width="match_parent"
+				        android:layout_height="match_parent" />
+    
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabShop"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical" >
+				    
+                    <TextView 
+                        android:id="@+id/levelShop"
+                        android:gravity="center"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                   
+				    <android.support.v4.view.ViewPager
+				        android:id="@+id/shop"
+				        android:layout_width="match_parent"
+				        android:layout_height="match_parent" />
+				    
+                </LinearLayout>
+                
+            </FrameLayout>
+            
+        </LinearLayout>
+        
+    </TabHost>
+
+</LinearLayout>

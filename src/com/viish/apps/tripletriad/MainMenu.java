@@ -47,6 +47,7 @@ public class MainMenu extends Activity implements OnClickListener
         initMenuItem((TextView) findViewById(R.id.settings));
         initMenuItem((TextView) findViewById(R.id.demo));
         initMenuItem((TextView) findViewById(R.id.solo));
+        initMenuItem((TextView) findViewById(R.id.cards));
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		if (prefs.getBoolean(getString(R.string.pref_first_launch), true))
@@ -80,6 +81,10 @@ public class MainMenu extends Activity implements OnClickListener
 			i.putExtra(getString(R.string.param_bot_vs_bot), false);
 			i.putExtra(getString(R.string.param_pvp), false);
 			startActivity(i);
+			break;
+		case R.id.cards:
+			Intent intent = new Intent(this, Cards.class);
+			startActivity(intent);
 			break;
 		case R.id.demo:
 			i.putExtra(getString(R.string.param_bot_vs_bot), true);

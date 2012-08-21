@@ -8,6 +8,7 @@
     <!-- Menu -->
     <string name="menu_settings">Preferences</string>
     <string name="menu_solo">Solo</string>
+    <string name="menu_cards">Cards</string>
     <string name="menu_demo">Demo</string>
     
     <!-- Preferences -->
@@ -49,5 +50,10 @@
     <string name="event_same">Same !</string>
     <string name="event_plus">Plus !</string>
     <string name="event_combo">Combo !</string>
+    
+    <!-- Cards -->
+    <string name="cards_level">Level</string>
+    <string name="cards_my_cards">My Cards</string>
+    <string name="cards_shop">Shop</string>
     
 </resources>

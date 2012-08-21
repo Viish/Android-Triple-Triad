@@ -241,11 +241,16 @@ public class DatabaseStream
 		return cards;
 	}
 	
-	public ArrayList<Card> getAllCards()
+	public ArrayList<Card> getAllCards(int filterByLevel)
 	{
 		ArrayList<Card> cards = new ArrayList<Card>();
 		
-		Cursor result = stream.query("Cards", null, null, null, null, null, "Level ASC");
+		String selection = null;
+		if (filterByLevel > -1) {
+			selection = "Level LIKE " + filterByLevel;
+		}
+		
+		Cursor result = stream.query("Cards", null, selection, null, null, null, "Level ASC");
 		if (result != null)
 		{
 			while (result.move(1))
@@ -258,8 +263,17 @@ public class DatabaseStream
 		
 		return cards;
 	}
+	
+	public ArrayList<Card> getAllCards()
+	{
+		return getAllCards(-1);
+	}
 
-	public ArrayList<Card> getMyCards() 
+	public ArrayList<Card> getMyCards() {
+		return getMyCards(-1);
+	}
+	
+	public ArrayList<Card> getMyCards(int filterByLevel) 
 	{
 		ArrayList<Card> cards = new ArrayList<Card>();
 		
@@ -276,7 +290,12 @@ public class DatabaseStream
 				String cardName = fullName.split("/")[1];
 				int episode = Integer.parseInt(fullName.split("/")[0].split("ff")[1]);
 				
-				Cursor result2 = stream.query("Cards", null, "Name LIKE \"" + cardName + "\" AND Episode LIKE " + episode, null, null, null, "Name ASC");
+				String selection = "";
+				if (filterByLevel > -1) {
+					selection = " AND Level LIKE " + filterByLevel;
+				}
+				
+				Cursor result2 = stream.query("Cards", null, "Name LIKE \"" + cardName + "\" AND Episode LIKE " + episode + selection, null, null, null, "Name ASC");
 				if (result2 != null && result2.move(1))
 				{
 					Card card = getCard(result2);
